@@ -1,0 +1,241 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.11"
+  PNPM_VERSION: "8.15.9"
+
+jobs:
+  # ─── Shared package ─────────────────────────────────────────────────────────
+  shared:
+    name: Shared — typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - run: pnpm --filter @optiagent/shared typecheck
+      - run: pnpm --filter @optiagent/shared build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shared-dist
+          path: shared/dist
+          retention-days: 1
+
+  # ─── Node backend ────────────────────────────────────────────────────────────
+  backend:
+    name: Backend — typecheck, lint & test
+    needs: shared
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: optiagent_test
+          POSTGRES_PASSWORD: test-secret
+          POSTGRES_DB: optiagent_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U optiagent_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://optiagent_test:test-secret@localhost:5432/optiagent_test
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+      JWT_PRIVATE_KEY_PATH: ./secrets/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: ./secrets/jwt-public.pem
+      AI_SERVICE_URL: http://localhost:8100
+      INTERNAL_SERVICE_TOKEN: ci-test-token
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-dist
+          path: shared/dist
+
+      - name: Generate JWT keys for tests
+        working-directory: web/backend
+        run: |
+          mkdir -p secrets
+          node -e "
+          const { generateKeyPairSync } = require('crypto');
+          const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+          const fs = require('fs');
+          fs.writeFileSync('secrets/jwt-private.pem', privateKey.export({ type:'pkcs8', format:'pem' }));
+          fs.writeFileSync('secrets/jwt-public.pem', publicKey.export({ type:'spki', format:'pem' }));
+          "
+
+      - name: Generate Prisma client
+        working-directory: web/backend
+        run: pnpm prisma:generate
+
+      - name: Run migrations
+        working-directory: web/backend
+        run: pnpm prisma:migrate deploy
+
+      - name: Typecheck
+        run: pnpm --filter @optiagent/backend typecheck
+
+      - name: Tests
+        run: pnpm --filter @optiagent/backend test
+
+      - name: Build (verify compilation)
+        run: pnpm --filter @optiagent/backend build
+
+  # ─── React frontend ──────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — typecheck & test
+    needs: shared
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-dist
+          path: shared/dist
+
+      - name: Typecheck
+        run: pnpm --filter @optiagent/frontend typecheck
+
+      - name: Tests
+        run: pnpm --filter @optiagent/frontend test
+
+      - name: Build
+        run: pnpm --filter @optiagent/frontend build
+        env:
+          VITE_API_URL: /api/v1
+
+  # ─── Python AI service ───────────────────────────────────────────────────────
+  ai-service:
+    name: AI Service — lint & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/ai-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check app tests || true   # non-fatal in CI until fully clean
+
+      - name: Type-check (mypy)
+        run: mypy app --ignore-missing-imports || true
+
+      - name: Tests
+        run: pytest tests/ -v --timeout=30
+        env:
+          INTERNAL_SERVICE_TOKEN: ci-test-token
+          OPENAI_API_KEY: sk-fake-key-for-tests
+
+  # ─── Docker build smoke test ──────────────────────────────────────────────────
+  docker-build:
+    name: Docker — build images
+    needs: [backend, frontend, ai-service]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/backend/Dockerfile
+          push: false
+          tags: optiagent-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/frontend/Dockerfile
+          push: false
+          tags: optiagent-frontend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build AI service image
+        uses: docker/build-push-action@v6
+        with:
+          context: web/ai-service
+          file: web/ai-service/Dockerfile
+          push: false
+          tags: optiagent-ai-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,365 @@
+================================================================================
+OPTIAGENT TECHNOLOGIES
+EXPENSE GUIDELINES — EMPLOYEE REFERENCE GUIDE
+Document ID: OAT-FP-002  |  Version: 2.4  |  Effective: January 1, 2025
+Owner: Finance (Accounts Payable)  |  ap@optiagent.com
+Classification: Internal — All Employees
+================================================================================
+
+This guide is a practical employee-facing companion to the Finance Policy
+(OAT-FP-001) Section 4. It explains how to submit expenses correctly, what is
+and is not reimbursable, per-country limits, and common mistakes to avoid.
+
+For the authoritative policy, always refer to Finance_Policy.docx (OAT-FP-001).
+
+================================================================================
+PART 1: SUBMITTING AN EXPENSE CLAIM — STEP BY STEP
+================================================================================
+
+All expenses must be submitted via Workday.
+Path: Workday > Pay > Expense > Create Expense Report
+
+STEP 1 — COLLECT YOUR RECEIPT
+At the time of purchase, obtain a receipt. A valid receipt must show:
+  • Vendor name and address (or logo)
+  • Date of purchase
+  • Items purchased or service description
+  • Amount paid and currency
+  • Payment method (optional but preferred)
+
+Credit card statements are NOT accepted as receipts. You need the original
+itemized receipt or invoice.
+
+Photographs of paper receipts (taken with your phone) are accepted as long as
+the image is clear, complete, and readable. Use the Workday mobile app to
+photograph and attach receipts on the go.
+
+STEP 2 — CREATE AN EXPENSE REPORT IN WORKDAY
+Log in to Workday. Navigate to Pay > Expense > Create Expense Report.
+  • Report Name: Use a descriptive name, e.g., "NYC Client Visit — March 2025"
+  • Business Purpose: Required field — describe the business reason clearly
+    (e.g., "Dinner with Accenture team to discuss Q2 renewal")
+  • Cost Center: Select your cost center (visible in Workday > My Profile > Job)
+
+STEP 3 — ADD EXPENSE LINE ITEMS
+For each item:
+  • Select the correct Expense Type from the dropdown
+  • Enter the exact amount (in the currency paid; Workday converts to USD)
+  • Enter the date of the expense
+  • Attach the receipt
+  • For meal expenses: list all attendees and their companies in the memo field
+
+STEP 4 — SUBMIT FOR APPROVAL
+Submit the expense report. Your manager receives an automated notification.
+Most expense reports are approved within 3–5 business days.
+
+STEP 5 — REIMBURSEMENT
+After manager approval, Finance processes reimbursement. Payment is made:
+  • USA: via ACH to your bank account on file — within 2 pay cycles (approx. 15 days)
+  • UK, Germany, Singapore: added to monthly payroll
+  • India: added to monthly payroll
+
+DEADLINES:
+  • Submit within 30 calendar days of the expense date
+  • Claims submitted after 30 days require manager justification
+  • Claims submitted after 90 days will generally be rejected (business reason
+    and Finance Director approval required)
+
+================================================================================
+PART 2: EXPENSE LIMITS BY CATEGORY (QUICK REFERENCE)
+================================================================================
+
+All limits are in USD unless noted. For country-specific per diems see Part 3.
+
+CATEGORY                          | LIMIT           | NOTES
+----------------------------------|-----------------|--------------------------
+Business meal — team (internal)   | USD 30/person   | State all attendees
+Business meal — client/customer   | USD 100/person  | State client names + purpose
+Light refreshments (internal)     | USD 15/person   | Coffee, snacks
+Rideshare / taxi                  | Actual cost     | Prefer Uber Business
+Parking                           | USD 50/day max  |
+Domestic flight (< 3 hrs)         | Economy only    | Book via Egencia
+Domestic flight (3–6 hrs)         | Economy / PE    | Premium economy OK
+International flight (> 6 hrs)    | Economy default | Business class: Director+
+Hotel — NYC, SF, London, SG       | USD 300/night   |
+Hotel — Tier 2 city               | USD 200/night   |
+Hotel — India                     | INR 10,000/night|
+Mobile phone bill                 | See grade below |
+Internet (remote employees only)  | USD 60/month    | Designated remote only
+Home office setup (one-time)      | USD 500 total   | Remote employees; 90 days
+Client gifts                      | USD 75/gift     | Pre-approval required
+Training (external)               | USD 1,500/year  | Manager + HRBP approval
+Team event / off-site             | USD 75/person   | VP approval if total > USD 5K
+
+MOBILE PHONE ALLOWANCE BY GRADE:
+  IC1–IC3:   USD 30/month
+  IC4–IC6:   USD 50/month
+  M1–M3:     USD 60/month
+  M4+:       USD 80/month
+  (See Salary Grades HR-SG-001 Sheet 5 for country equivalents)
+
+================================================================================
+PART 3: PER DIEM RATES (MEALS & INCIDENTALS WHILE TRAVELLING)
+================================================================================
+
+Per diem is an alternative to itemized meal receipts during business travel.
+You CANNOT mix per diem and itemized receipts for the same day.
+
+COUNTRY          | STANDARD RATE / DAY | DIRECTOR+ RATE
+-----------------|---------------------|----------------------
+USA              | USD 75              | USD 100
+UK               | GBP 60              | GBP 80
+Germany          | EUR 28 (≥8 hrs)     | EUR 28 (legal max; cannot increase)
+                 | EUR 14 (< 8 hrs)    |
+India            | INR 2,000           | INR 3,000
+Singapore        | SGD 80              | SGD 110
+
+GERMANY NOTE: German per diem rates are set by law (Reisekostenrecht).
+The deductible daily rate is EUR 28 for full days away from home (> 24 hrs)
+and EUR 14 for 8–24 hrs. These are the maximum tax-free reimbursable amounts.
+OptiAgent reimburses at the legal rate only.
+
+USA NOTE: The IRS standard CONUS per diem rate varies by city. OptiAgent uses
+the flat USD 75/day rate for simplicity, which covers most US locations.
+High-cost cities (NYC, SF, DC, Boston) are eligible for up to USD 100/day with
+manager approval and a note in the expense report.
+
+INTERNATIONAL TRAVEL MEALS:
+For countries not listed above, Finance will determine an appropriate rate
+based on HMRC or State Department foreign per diem tables. Email
+ap@optiagent.com before your trip to confirm the applicable rate.
+
+================================================================================
+PART 4: TRAVEL BOOKING RULES
+================================================================================
+
+ALL BUSINESS TRAVEL MUST BE BOOKED VIA EGENCIA.
+Portal: travel.optiagent.com (via Okta SSO)
+
+Booking outside Egencia is only permitted when:
+  (a) The required hotel is not available in Egencia (e.g., conference hotel);
+  (b) A significantly cheaper rate is available directly (> 20% savings);
+      — Requires manager written approval BEFORE booking
+  In either case, attach the justification note to your expense claim.
+
+ADVANCE BOOKING DISCOUNTS:
+  • Book domestic flights at least 7 days in advance
+  • Book international flights at least 14 days in advance
+  • Same-day and next-day bookings above USD 200 (domestic) or USD 800
+    (international) require manager justification
+
+FLIGHT CLASS REMINDER:
+  • Economy: all employees, all flights (default)
+  • Premium Economy: any employee for flights ≥ 3 hours (no additional approval)
+  • Business Class: Director (M3) and above for flights ≥ 6 hours only
+  • Business Class for IC-level: VP approval required + business justification
+  • FIRST CLASS: NEVER PERMITTED for any employee
+
+HOTEL RULES:
+  • Book the cheapest available option within the city limit
+  • Avoid choosing hotels more than 45 minutes from your meeting venue unless
+    price difference justifies it
+  • If all hotels are above the limit (e.g., during a major conference), document
+    this and get manager approval before booking
+
+LOYALTY POINTS:
+  You may keep personal airline, hotel, and car rental loyalty points earned on
+  company travel. However, you must not choose a more expensive option solely
+  to earn points. Loyalty status must not influence travel decisions in a way
+  that increases company costs.
+
+CANCELLATIONS:
+  Cancel bookings as early as possible to minimize cancellation fees. If you
+  cancel a non-refundable booking without a valid business reason, the
+  cancellation fee may be at your own cost. Always cancel via Egencia to
+  ensure the charge is processed correctly.
+
+================================================================================
+PART 5: MEALS & ENTERTAINMENT
+================================================================================
+
+BUSINESS MEALS — KEY RULES:
+1. The business purpose must be documented (what was discussed; what was decided)
+2. All attendee names and their companies must be listed in the expense claim
+3. The most senior OptiAgent employee present should pay and claim
+4. Alcohol is permitted within the meal limit but excessive alcohol is not
+   reimbursable and is a conduct issue. Use judgment.
+5. Meals for internal team meetings are only reimbursable if:
+   — The meeting is ≥ 4 hours long, OR
+   — The meeting runs directly through a mealtime (e.g., 12:00–13:00)
+   — Informal team lunches without a formal meeting agenda are not reimbursable
+
+CLIENT ENTERTAINMENT ABOVE USD 100/PERSON:
+Requires Director approval before the event. Submit a pre-approval email to your
+manager at least 48 hours in advance. The pre-approval email must state:
+  • Client name and company
+  • Nature of the entertainment (dinner, sporting event, etc.)
+  • Estimated total cost
+  • Business purpose
+
+SPORTING EVENTS / CONCERTS / THEATER:
+Client entertainment at events (tickets) follows the same rules as meals.
+Per-person limit is USD 150 with Director approval. Tickets above USD 150 per
+person require VP approval. Always document the business purpose.
+
+ALCOHOL AT INTERNAL EVENTS:
+Bar tabs at internal company events (team off-sites, celebrations) are
+reimbursable at up to USD 25/person (included in the per-person event limit).
+Bar tabs above this require VP approval.
+
+WORKING MEALS (DESK LUNCH / DELIVERY):
+Meals ordered in to the office during a working lunch meeting are reimbursable
+at up to USD 25/person. DoorDash, Uber Eats, or local equivalents are fine.
+Attach the itemized order receipt (not just the payment confirmation).
+
+================================================================================
+PART 6: GIFTS & HOSPITALITY
+================================================================================
+
+CLIENT GIFTS:
+  • Maximum: USD 75 per gift per recipient per year
+  • All gifts require manager approval before purchase
+  • Cash gifts, gift cards, or gift certificates to clients: NEVER permitted
+  • Gifts must be branded (OptiAgent branded preferred) or generic professional
+    items (wine, books, food hampers)
+  • Gifts to government officials: ZERO TOLERANCE — never give gifts to
+    government employees, regulators, or public officials without Legal approval
+
+RECEIVING GIFTS FROM VENDORS/CLIENTS:
+  • Under USD 50: may be accepted; no declaration needed
+  • USD 50–150: must be declared in the Gift & Hospitality Register (Workday)
+  • Above USD 150: must be declined OR donated to company common areas (e.g.,
+    food items) and declared in the register
+  • Cash gifts: NEVER accept, regardless of amount
+  See Employee Handbook Section 16.3 for the full gift policy.
+
+VENDOR-SPONSORED EVENTS:
+If a vendor invites you to a conference, sporting event, or dinner:
+  • Under USD 50 total value: accept without declaration
+  • USD 50–150: declare in the Gift & Hospitality Register
+  • Above USD 150: requires Manager + HRBP pre-approval before accepting
+  • Vendor-sponsored international trips: always require VP + HRBP approval
+
+================================================================================
+PART 7: TECHNOLOGY & SOFTWARE EXPENSES
+================================================================================
+
+PERSONAL MOBILE PHONE BILL:
+Claim your monthly phone bill via Workday Expense > Mobile Allowance.
+Select your applicable limit based on your grade (see Part 2).
+Attach your monthly bill or a screenshot showing the total amount.
+You do NOT need to submit an itemized call log.
+
+INTERNET ALLOWANCE (REMOTE EMPLOYEES):
+If you are a designated full remote employee (specified in your offer letter or
+a formal remote work agreement), you receive USD 60/month (or country equivalent)
+as a monthly internet allowance. Submit via Workday Expense > Internet Allowance
+each month with a copy of your bill or a brief note if your bill is on a flat
+rate. Partial months are pro-rated.
+
+HOME OFFICE EQUIPMENT (REMOTE EMPLOYEES):
+You have a one-time USD 500 home office equipment allowance within the first
+90 days of remote designation. Eligible items:
+  • Desk or standing desk
+  • Ergonomic chair
+  • External monitor (if not provided by IT)
+  • Keyboard, mouse, headset (if not provided by IT)
+  • Webcam (if not provided by IT)
+  • Cable management accessories
+
+NOT ELIGIBLE: Decorative items, personal furniture not used for work,
+printers (request via IT for a business printer if needed).
+
+PERSONAL SOFTWARE SUBSCRIPTIONS:
+Personal software subscriptions (Adobe Creative Cloud personal, Grammarly
+personal, etc.) are NOT reimbursable. If you need a business tool, request it
+via ServiceNow (IT > Software Request). Standard tools are approved within
+2 business days. Non-standard tools require IT Security review.
+
+================================================================================
+PART 8: COMMON EXPENSE MISTAKES (AND HOW TO AVOID THEM)
+================================================================================
+
+MISTAKE 1: No receipt for claims ≥ USD 25
+FIX: Always get a receipt at point of purchase. Use your phone camera
+immediately — do not rely on emailed receipts that might be missed.
+
+MISTAKE 2: Credit card statement submitted instead of itemized receipt
+FIX: Your card statement shows you paid but not WHAT you paid for. Get the
+merchant receipt. If lost, request a duplicate from the vendor.
+
+MISTAKE 3: Business purpose is too vague ("dinner" or "travel")
+FIX: Be specific: "Dinner with Google Cloud partnership team to discuss
+co-sell agreement for Q3 2025" is acceptable. "Dinner" is not.
+
+MISTAKE 4: Claiming above your category limit without approval
+FIX: Know your limits (Part 2). If you need to exceed a limit, get written
+manager approval before incurring the expense and attach the approval email
+to your claim.
+
+MISTAKE 5: Claiming non-reimbursable items
+FIX: Read Section 4.4 of Finance_Policy.docx. When in doubt, email
+ap@optiagent.com before spending.
+
+MISTAKE 6: Submitting after 30 days without a reason
+FIX: Submit within 30 days. If you missed the window, explain why in the
+"Business Purpose" field and get your manager's written acknowledgment.
+
+MISTAKE 7: Missing attendee names for meal expenses
+FIX: List every person present at a business meal: "Jane Smith (Google),
+Raj Patel (OptiAgent AE), Alice Chen (OptiAgent CSM)."
+
+MISTAKE 8: Booking travel outside Egencia without approval
+FIX: Book via travel.optiagent.com. If you must book externally, get written
+manager approval first and attach it to your expense claim.
+
+MISTAKE 9: Corporate card used for personal expenses
+FIX: Keep personal and business spending separate. If you accidentally charge
+a personal item to your corporate card, repay it within 14 days via the
+repayment process in Workday.
+
+MISTAKE 10: Claiming mini-bar charges or personal in-flight entertainment
+FIX: These are never reimbursable. See Section 4.4 of Finance Policy.
+
+================================================================================
+PART 9: CONTACT & ESCALATION
+================================================================================
+
+For questions about what is reimbursable:
+  Email: ap@optiagent.com
+  Response time: 1 business day
+
+For questions about expense policy interpretation:
+  Email: finance@optiagent.com
+  Response time: 2 business days
+
+For rejected expense claims:
+  Your claim will show a rejection reason in Workday. Address the issue and
+  re-submit, or contact ap@optiagent.com if you believe the rejection was in error.
+
+For questions about corporate credit cards:
+  Email: finance.ap@optiagent.com
+
+For questions about per diems on international trips not listed in Part 3:
+  Email: ap@optiagent.com BEFORE your trip to confirm the applicable rate.
+
+================================================================================
+DOCUMENT CONTROL
+================================================================================
+
+Document ID:    OAT-FP-002
+Version:        2.4
+Effective:      January 1, 2025
+Owner:          Finance / Accounts Payable
+Approved by:    Alexandra Chen (CFO), Sunita Patel (Controller)
+Next Review:    January 1, 2026
+
+Related Documents:
+  Finance Policy & Procedures Manual:  OAT-FP-001 (Finance_Policy.docx)
+  Employee Handbook:                   HR-EH-001
+  Salary Grades (allowance tables):    HR-SG-001 (Salary_Grades.xlsx)
+  Company Policy (data/AI rules):      OAT-CP-001 (Company_Policy.docx)
+
+================================================================================
+END OF DOCUMENT
+================================================================================

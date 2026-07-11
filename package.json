@@ -1,0 +1,30 @@
+{
+  "name": "optiagent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OptiAgent — Multi-Agent AI Enterprise Operations Platform (Deloitte Capstone 2026)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20 <27",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.15.9",
+  "scripts": {
+    "build": "pnpm -r --filter \"./shared\" --filter \"./web/backend\" --filter \"./web/frontend\" build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "dev:backend": "pnpm --filter @optiagent/backend dev",
+    "dev:frontend": "pnpm --filter @optiagent/frontend dev",
+    "dev:ai": "cd web/ai-service && uvicorn app.main:app --reload --port 8100",
+    "dev": "concurrently -k -n backend,ai,frontend -c blue,magenta,green \"pnpm dev:backend\" \"pnpm dev:ai\" \"pnpm dev:frontend\"",
+    "stack": "pnpm infra:up && concurrently -k -n backend,ai,frontend -c blue,magenta,green \"pnpm dev:backend\" \"pnpm dev:ai\" \"pnpm dev:frontend\"",
+    "shared:build": "pnpm --filter @optiagent/shared build",
+    "infra:up": "docker compose -f docker/docker-compose.yml up -d postgres redis chromadb",
+    "infra:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "typescript": "5.5.4"
+  }
+}

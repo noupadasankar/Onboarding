@@ -1,0 +1,117 @@
+ACCEPTABLE USE POLICY (AUP)
+OptiAgent Pty Ltd
+Version: 1.4 | Effective Date: 1 February 2026 | Review Date: 1 February 2027
+Owner: IT & People & Culture | Approved by: Chief Operating Officer
+
+─────────────────────────────────────────────────────────────────────────────
+1. PURPOSE AND SCOPE
+─────────────────────────────────────────────────────────────────────────────
+OptiAgent provides computing systems, network access, and digital tools to
+support legitimate business activities. These resources are primarily for
+business use. Limited, reasonable personal use is permitted provided it does
+not interfere with work, consume significant bandwidth, or violate any
+provision of this policy. This policy applies to all employees, contractors,
+and any individual granted access to OptiAgent systems.
+
+─────────────────────────────────────────────────────────────────────────────
+2. PROHIBITED ACTIVITIES
+─────────────────────────────────────────────────────────────────────────────
+The following activities are strictly prohibited on any company system or
+network:
+
+  - Accessing, downloading, or distributing illegal, offensive, or
+    discriminatory content.
+  - Torrenting or peer-to-peer file sharing.
+  - Cryptocurrency mining or any activity that consumes company computing
+    resources for personal financial gain.
+  - Gathering competitor intelligence through deceptive, unlawful, or
+    unauthorised means.
+  - Circumventing network security controls, firewalls, or content filters.
+
+─────────────────────────────────────────────────────────────────────────────
+3. INTERNET AND NETWORK MONITORING
+─────────────────────────────────────────────────────────────────────────────
+OptiAgent reserves the right to monitor internet usage, network traffic, and
+device activity on company-owned systems and networks. Monitoring may occur
+without prior notice and without individual consent beyond this policy
+acknowledgement. Users should have no expectation of privacy when using
+company systems.
+
+─────────────────────────────────────────────────────────────────────────────
+4. EMAIL AND COMMUNICATION
+─────────────────────────────────────────────────────────────────────────────
+Company email must be used in a professional manner. Emails representing
+OptiAgent externally must maintain a courteous and professional tone. Personal
+file transfers via company email are limited to attachments under 25 MB.
+Company email must not be used for bulk personal correspondence or commercial
+activities unrelated to OptiAgent business.
+
+─────────────────────────────────────────────────────────────────────────────
+5. CLOUD STORAGE
+─────────────────────────────────────────────────────────────────────────────
+Approved cloud storage platforms are Microsoft OneDrive and SharePoint.
+Company data must not be stored on personal cloud services including Google
+Drive, Dropbox, iCloud, or similar platforms. Transferring company data to
+unapproved services — even temporarily — constitutes a policy violation and
+may also breach client confidentiality obligations.
+
+─────────────────────────────────────────────────────────────────────────────
+6. AI TOOLS AND PLATFORMS
+─────────────────────────────────────────────────────────────────────────────
+External AI tools — including ChatGPT, Gemini, Copilot (non-Microsoft 365
+versions), and similar consumer-grade services — are prohibited for any work
+involving Confidential or Restricted data, client deliverables, or internal
+project material. OptiAgent is the company's approved and compliant AI
+platform for all such use cases. Use of OptiAgent for business tasks is
+encouraged; use of unapproved AI services for the same tasks is a disciplinary
+matter.
+
+─────────────────────────────────────────────────────────────────────────────
+7. SOFTWARE LICENSING
+─────────────────────────────────────────────────────────────────────────────
+Employees may only use software for which OptiAgent holds a valid licence.
+Installing unlicensed, cracked, or trial-expired software is prohibited. If
+you require a software licence, submit a request through the IT Helpdesk.
+
+─────────────────────────────────────────────────────────────────────────────
+8. SYSTEM ACCESS AND CREDENTIALS
+─────────────────────────────────────────────────────────────────────────────
+Employees must not share passwords, access tokens, or any form of
+authentication credentials with colleagues or third parties. System access
+must be appropriate to your job role; accessing systems, files, or data beyond
+your authorised scope is prohibited, regardless of technical ability to do so.
+
+─────────────────────────────────────────────────────────────────────────────
+9. DATA BACKUP
+─────────────────────────────────────────────────────────────────────────────
+Employees are personally responsible for ensuring work-in-progress files are
+saved to approved cloud locations (OneDrive or SharePoint) and not stored
+solely on local drives. OptiAgent does not guarantee recovery of data stored
+only on local device storage.
+
+─────────────────────────────────────────────────────────────────────────────
+10. BRING YOUR OWN DEVICE (BYOD)
+─────────────────────────────────────────────────────────────────────────────
+Personal smartphones may be used to access Microsoft 365 email and Microsoft
+Teams provided the device is enrolled in the company's Intune MDM platform.
+Personal laptops or desktop computers must not be used to access, store, or
+process company data under any circumstances. Intune enrollment automatically
+enforces minimum security baselines; employees consent to this by enrolling.
+
+─────────────────────────────────────────────────────────────────────────────
+11. CONSEQUENCES OF VIOLATION
+─────────────────────────────────────────────────────────────────────────────
+Violation of this policy may result in disciplinary action proportionate to
+the severity and intent of the breach, ranging from a formal warning through
+to suspension, termination of employment, or referral to relevant authorities
+where the conduct is unlawful.
+
+─────────────────────────────────────────────────────────────────────────────
+12. ANNUAL ACKNOWLEDGEMENT
+─────────────────────────────────────────────────────────────────────────────
+All staff are required to read and formally acknowledge this policy each year.
+Acknowledgement is completed via the HR portal. New employees must acknowledge
+the AUP as part of onboarding before system access is granted.
+
+─────────────────────────────────────────────────────────────────────────────
+For queries, contact: it-helpdesk@optiagent.com | Internal ext. 1100

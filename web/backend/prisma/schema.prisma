@@ -1,0 +1,261 @@
+// OptiAgent relational schema (owned by the Node backend).
+// Increment 1 covers identity + RBAC + auth + an append-only audit log.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The four platform roles. Values mirror `Role` in @optiagent/shared.
+enum RoleName {
+  EMPLOYEE
+  HR_MANAGER
+  FINANCE_ADMIN
+  IT_ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  department   String?
+  isActive     Boolean  @default(true) @map("is_active")
+
+  roleId String @map("role_id") @db.Uuid
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  uploadedDocuments Document[]      @relation("UploadedDocuments")
+  conversations     Conversation[]  @relation("UserConversations")
+  notifications     Notification[]  @relation("UserNotifications")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        RoleName         @unique
+  description String?
+  permissions RolePermission[]
+  users       User[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("roles")
+}
+
+model Permission {
+  id    String @id @default(uuid()) @db.Uuid
+  /// Machine key, e.g. "users:read" — mirrors `Permission` in @optiagent/shared.
+  key   String @unique
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+/// Explicit M:N join so grants can carry metadata later (e.g. granted_by).
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+/// Server-side record of issued refresh tokens (rotation + revocation).
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// The token's `jti`. The raw token is never stored.
+  jti       String   @unique
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revokedAt DateTime? @map("revoked_at")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Append-only audit trail (no UPDATE/DELETE from the app service user in prod).
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  resource   String?
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  requestId  String?  @map("request_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+// ─── Phase 2 models ────────────────────────────────────────────────────────
+
+/// Organisational department — owns documents and scopes agent routing.
+model Department {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique          // "hr" | "finance" | "it" | "general"
+  displayName String    @map("display_name")
+  description String?
+  isActive    Boolean   @default(true)   @map("is_active")
+
+  documents   Document[]
+  createdAt   DateTime  @default(now())  @map("created_at")
+  updatedAt   DateTime  @updatedAt       @map("updated_at")
+
+  @@map("departments")
+}
+
+/// Status of a document through the ingestion pipeline.
+enum DocumentStatus {
+  PENDING      // uploaded, not yet indexed
+  INDEXING     // AI service is processing
+  INDEXED      // available for search
+  FAILED       // indexing failed
+  SUPERSEDED   // a newer version of this document has been uploaded
+  DELETED      // soft-deleted
+}
+
+/// Document uploaded by a user; indexed by the AI service.
+model Document {
+  id             String         @id @default(uuid()) @db.Uuid
+  filename       String
+  originalName   String         @map("original_name")
+  mimeType       String         @map("mime_type")
+  sizeBytes      Int            @map("size_bytes")
+  storagePath    String         @map("storage_path")   // local disk or S3 key
+  status         DocumentStatus @default(PENDING)
+
+  departmentId   String?        @map("department_id") @db.Uuid
+  department     Department?    @relation(fields: [departmentId], references: [id])
+
+  uploadedById   String         @map("uploaded_by_id") @db.Uuid
+  uploadedBy     User           @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+
+  /// AI service returns these after indexing
+  chunkCount     Int?           @map("chunk_count")
+  vectorCount    Int?           @map("vector_count")
+  aiDocumentId   String?        @map("ai_document_id")  // ID used in ChromaDB metadata
+
+  errorMessage   String?        @map("error_message")
+
+  /// Version tracking — incremented on each re-upload of the same document name.
+  version          Int       @default(1)
+  isLatest         Boolean   @default(true)  @map("is_latest")
+  supersededAt     DateTime?                 @map("superseded_at")
+
+  /// Self-referential version chain (null on the first version).
+  parentDocumentId String?   @map("parent_document_id") @db.Uuid
+  parent           Document? @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
+  versions         Document[] @relation("DocumentVersions")
+
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt      @map("updated_at")
+
+  @@index([departmentId])
+  @@index([uploadedById])
+  @@index([status])
+  @@index([originalName, departmentId, isLatest])
+  @@map("documents")
+}
+
+/// Multi-turn conversation between a user and the AI.
+model Conversation {
+  id           String    @id @default(uuid()) @db.Uuid
+  title        String?                    // auto-generated from first question
+  userId       String    @map("user_id") @db.Uuid
+  user         User      @relation("UserConversations", fields: [userId], references: [id])
+
+  /// The AI-service conversation ID (links to ConversationRepository on the Python side).
+  aiConversationId  String?  @unique  @map("ai_conversation_id")
+
+  departmentHint    String?  @map("department_hint")  // "hr" | "finance" | "it"
+  selectedAgent     String?  @map("selected_agent")   // last agent used
+  isActive          Boolean  @default(true)   @map("is_active")
+
+  messages     Message[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt      @map("updated_at")
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+/// Individual message within a conversation.
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role           MessageRole
+  content        String       @db.Text
+
+  /// AI metadata — present only on assistant messages
+  model          String?
+  provider       String?
+  promptTokens   Int?   @map("prompt_tokens")
+  completionTokens Int? @map("completion_tokens")
+  latencyMs      Float? @map("latency_ms")
+  citations      Json?          // Citation[] serialised from AI service response
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+// ─── Phase 2 — Notifications & Admin Settings ─────────────────────────────────
+
+/// In-app notification for a user (document indexed, errors, system messages).
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String                        // "document_indexed" | "document_failed" | "system"
+  title     String
+  body      String    @db.Text
+  metadata  Json?                         // arbitrary context (documentId, etc.)
+  isRead    Boolean   @default(false)     @map("is_read")
+  readAt    DateTime?                     @map("read_at")
+
+  createdAt DateTime  @default(now())     @map("created_at")
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+/// Platform-wide admin key/value configuration store.
+model AdminSetting {
+  key         String    @id               // e.g. "maintenance_mode", "max_file_size_mb"
+  value       Json                        // JSON so any type can be stored
+  description String?
+  updatedBy   String?   @map("updated_by") @db.Uuid   // userId of last editor
+  updatedAt   DateTime  @updatedAt        @map("updated_at")
+  createdAt   DateTime  @default(now())   @map("created_at")
+
+  @@map("admin_settings")
+}

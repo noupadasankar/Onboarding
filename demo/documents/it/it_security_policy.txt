@@ -1,0 +1,115 @@
+IT SECURITY POLICY
+OptiAgent Pty Ltd
+Version: 2.1 | Effective Date: 1 February 2026 | Review Date: 1 February 2027
+Owner: IT Security Team | Approved by: Chief Information Security Officer
+
+─────────────────────────────────────────────────────────────────────────────
+1. PURPOSE AND SCOPE
+─────────────────────────────────────────────────────────────────────────────
+This policy establishes the minimum security standards all OptiAgent employees,
+contractors, and third-party users must follow when accessing company systems,
+networks, or data. Non-compliance may result in disciplinary action.
+
+─────────────────────────────────────────────────────────────────────────────
+2. PASSWORD REQUIREMENTS
+─────────────────────────────────────────────────────────────────────────────
+All account passwords must meet the following criteria:
+
+  - Minimum length of 12 characters.
+  - Must contain at least one uppercase letter, one lowercase letter, one
+    numeric digit, and one special character (e.g. !, @, #, $).
+  - Dictionary words, company names, usernames, or sequential patterns
+    (e.g. "Password1!", "OptiAgent2026") are strictly prohibited.
+  - Passwords expire every 90 days. Users will receive automated reminders
+    at 14 days, 7 days, and 1 day before expiry.
+  - The system enforces a password history of 10; the last 10 passwords may
+    not be reused.
+
+─────────────────────────────────────────────────────────────────────────────
+3. MULTI-FACTOR AUTHENTICATION (MFA)
+─────────────────────────────────────────────────────────────────────────────
+MFA is mandatory for all staff across all company systems, including Microsoft
+365, VPN, cloud platforms, and internal applications. Microsoft Authenticator
+is the preferred and supported MFA method. Hardware security keys (FIDO2) are
+approved as an alternative for privileged accounts. SMS-based MFA is not
+permitted for accounts with access to Confidential or Restricted data.
+
+─────────────────────────────────────────────────────────────────────────────
+4. DEVICE SECURITY
+─────────────────────────────────────────────────────────────────────────────
+All company-issued devices must have full-disk encryption enabled: BitLocker
+on Windows and FileVault on macOS. Devices must be configured to lock
+automatically after 5 minutes of inactivity. Screen lock requires password or
+biometric authentication to resume.
+
+Only company-issued laptops and desktops may be used to access production
+systems or handle Confidential and Restricted data. Personal (BYOD) devices
+are permitted for Microsoft 365 email and Teams only, provided they are
+enrolled in the company Mobile Device Management (MDM) platform (Microsoft
+Intune) and meet minimum OS patch requirements.
+
+─────────────────────────────────────────────────────────────────────────────
+5. SOFTWARE INSTALLATION AND ADMIN RIGHTS
+─────────────────────────────────────────────────────────────────────────────
+Standard users do not hold local administrator rights on company devices. All
+software installations must be requested through the IT Helpdesk and approved
+before installation. Unauthorised software, browser extensions, or plugins are
+prohibited.
+
+─────────────────────────────────────────────────────────────────────────────
+6. REMOTE ACCESS AND VPN
+─────────────────────────────────────────────────────────────────────────────
+All access to internal systems, shared drives, or on-premises resources from
+outside the office network requires the use of the company VPN (Cisco
+AnyConnect). Split-tunnelling is disabled by default. VPN credentials must not
+be shared.
+
+─────────────────────────────────────────────────────────────────────────────
+7. DATA CLASSIFICATION
+─────────────────────────────────────────────────────────────────────────────
+OptiAgent classifies data into four tiers:
+
+  Public      — Information approved for external release.
+  Internal    — General business information not for public disclosure.
+  Confidential — Client data, financial records, and project deliverables.
+                 Requires encryption in transit and at rest.
+  Restricted  — Highly sensitive data (PII, legal, credentials). Access
+                 requires explicit approval; audit logging is mandatory.
+
+─────────────────────────────────────────────────────────────────────────────
+8. USB AND EXTERNAL MEDIA
+─────────────────────────────────────────────────────────────────────────────
+USB storage devices and external media are prohibited on company devices unless
+the device is an IT-approved, hardware-encrypted drive issued through the IT
+Helpdesk. Unapproved USB devices are blocked at the endpoint level.
+
+─────────────────────────────────────────────────────────────────────────────
+9. PHISHING AWARENESS
+─────────────────────────────────────────────────────────────────────────────
+Do not click links or open attachments in unexpected or suspicious emails.
+Suspicious emails must be reported immediately using the Outlook "Report
+Phishing" button. Do not forward or reply to suspected phishing messages.
+
+─────────────────────────────────────────────────────────────────────────────
+10. SOCIAL MEDIA
+─────────────────────────────────────────────────────────────────────────────
+Employees must not disclose client names, project details, internal system
+names, or any proprietary information on personal or professional social media
+accounts without written approval from the Communications team.
+
+─────────────────────────────────────────────────────────────────────────────
+11. INCIDENT REPORTING
+─────────────────────────────────────────────────────────────────────────────
+All suspected or confirmed security incidents — including lost devices, phishing
+clicks, unauthorised access, or data exposure — must be reported to the Security
+team at security@optiagent.com within 2 hours of discovery. Do not attempt to
+investigate or remediate incidents independently.
+
+─────────────────────────────────────────────────────────────────────────────
+12. POLICY ACKNOWLEDGEMENT
+─────────────────────────────────────────────────────────────────────────────
+All staff must acknowledge this policy annually. Failure to comply with any
+provision may result in disciplinary action, up to and including termination.
+
+─────────────────────────────────────────────────────────────────────────────
+For queries, contact: it-helpdesk@optiagent.com | Internal ext. 1100

@@ -1,0 +1,51 @@
+EMPLOYEE EXPENSE POLICY
+Version 3.2 | Effective: 1 January 2026 | Owner: Finance Director
+
+1. PURPOSE AND SCOPE
+This policy governs the reimbursement of business expenses incurred by employees in the course of their duties. It applies to all permanent, fixed-term, and contracted staff. Expenses must be legitimate, reasonable, and incurred wholly for business purposes.
+
+2. APPROVAL THRESHOLDS
+- Under £50: Submit via the expense portal; no pre-approval required.
+- £50 to £250: Line manager approval required before submission.
+- Over £250: Department head approval required before the expense is incurred.
+Employees who incur expenses without the required pre-approval may not be reimbursed.
+
+3. TRAVEL
+Flights under 4 hours must be booked in economy class. Flights of 4 hours or more may be booked in business class, subject to VP-level approval obtained in advance. All flights should be booked at least 14 days ahead where practicable. Rail travel should be standard class unless a first-class ticket costs less than economy at point of purchase.
+
+4. ACCOMMODATION
+Maximum nightly hotel rates (room only, excluding VAT) are:
+- London: £150
+- UK regions: £100
+- International: £180
+Rates above these limits require department head approval and a supporting business justification.
+
+5. MEALS AND ENTERTAINMENT
+Daily meal allowances (receipts required over £10):
+- Breakfast: up to £30
+- Lunch: up to £50
+- Dinner: up to £75
+Client entertainment may be claimed at up to £100 per person. The claim must include the names and organisations of all attendees and a clear business purpose. Alcohol may not be charged to client invoices under any circumstances.
+
+6. MILEAGE
+Business mileage in a personal vehicle is reimbursed at HMRC advisory rates: 45p per mile for the first 10,000 miles in a tax year, reducing to 25p per mile thereafter. Employees must log each journey with date, start point, destination, and business purpose.
+
+7. TAXIS AND RIDE-HAILING
+Taxis are permitted when public transport is genuinely unavailable or impractical, or when travel takes place after 10pm. Uber is the preferred provider where available. Receipts must be obtained for all journeys.
+
+8. CONFERENCE AND TRAINING REGISTRATION
+Registration fees up to £500 may be approved by a line manager. Fees above £500 require CFO approval. Travel and accommodation for conferences are subject to the standard rates above.
+
+9. EQUIPMENT AND SOFTWARE
+Laptops, monitors, peripherals, and software licences must be procured through the IT department and the procurement system. These items may not be purchased personally and claimed on expenses.
+
+10. SUBMISSION DEADLINES AND RECEIPTS
+Expense claims must be submitted within 30 days of the expense date. Claims older than 30 days will be rejected without exception. Original receipts are required for all items over £10; clear digital photographs of receipts are accepted. Receipts must show the vendor name, date, itemised amounts, and total paid.
+
+11. PROHIBITED EXPENSES
+The following will not be reimbursed under any circumstances: alcohol charged to client invoices, personal expenditure of any kind, parking or traffic fines, and penalties of any nature.
+
+12. REIMBURSEMENT
+Approved expenses are processed through payroll and paid within 5 working days of approval. Queries regarding reimbursement should be directed to finance@company.com.
+
+Policy queries: finance@company.com | Last reviewed: October 2025

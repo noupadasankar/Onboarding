@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+frontend/dist/
+backend/dist/
+shared/dist/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+**/secrets/
+*.pem
+!**/*.example.pem
+
+# Prisma
+backend/prisma/*.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docker
+docker/volumes/

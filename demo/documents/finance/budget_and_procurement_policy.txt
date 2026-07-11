@@ -1,0 +1,38 @@
+BUDGET AND PROCUREMENT POLICY
+Version 2.1 | Effective: 1 January 2026 | Owner: Chief Financial Officer
+
+1. PURPOSE
+This policy establishes the framework for annual budget planning and the procurement of goods and services. It ensures financial accountability, value for money, and appropriate control over company expenditure.
+
+2. ANNUAL BUDGET CYCLE
+Budget submissions are due from all departments in Q4 of each calendar year, in accordance with the schedule issued by Finance. The Board of Directors reviews and approves the consolidated budget in December, with the approved budget taking effect from 1 January of the following year. Mid-year reforecasts may be requested by the CFO in response to material changes in business conditions.
+
+3. BUDGET OWNERSHIP
+Each department head is the named owner of their cost centre and is accountable for expenditure within it. Budget owners are responsible for monitoring their spend monthly and ensuring their teams are aware of approved limits.
+
+4. VARIANCE REPORTING
+Any department projecting or recording expenditure more than 10% above its approved budget must submit a written variance explanation to the CFO within five business days of identifying the overage. The explanation must include root cause, corrective actions, and a revised forecast.
+
+5. PURCHASE ORDERS
+A purchase order (PO) raised in the company procurement system is mandatory for any spend over £500. Invoices received without a corresponding approved PO will be returned to the vendor unpaid. Exceptions require CFO sign-off.
+
+6. VENDOR APPROVAL AND DUE DILIGENCE
+Engaging a new vendor where anticipated annual spend exceeds £5,000 requires a formal due diligence process: a minimum of three competitive quotes, a credit check, and review of the vendor's insurance and compliance documentation. Approved vendors are recorded in the procurement system. Existing preferred suppliers are exempt from re-tendering but are subject to annual performance review.
+
+7. SOFTWARE AND SAAS SUBSCRIPTIONS
+All software-as-a-service (SaaS) tools and cloud subscriptions must receive IT Security approval before procurement commences, regardless of cost. This requirement exists to protect company data and ensure compliance with information security standards.
+
+8. CONTRACT SIGNING AUTHORITY
+- Up to £10,000: Head of Department
+- £10,001 to £50,000: Chief Financial Officer
+- Above £50,000: Chief Executive Officer, with Board ratification
+
+No individual may sign a contract that exceeds their delegated authority.
+
+9. PREFERRED SUPPLIERS
+The company maintains negotiated rate agreements with the following suppliers: Amazon Web Services (cloud infrastructure), Microsoft (productivity and licensing), and Salesforce (CRM platform). These negotiated rates must be applied in all relevant purchases. Procurement outside preferred suppliers at equivalent or higher cost requires written justification.
+
+10. PAYMENT TERMS
+Standard payment terms are Net 30 days from invoice date. The Finance team will negotiate early payment discounts where cash flow permits. Late payment charges incurred through administrative delays are the responsibility of the relevant department budget.
+
+Policy queries: finance@company.com | Last reviewed: October 2025
