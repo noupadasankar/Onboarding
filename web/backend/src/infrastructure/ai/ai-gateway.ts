@@ -10,6 +10,7 @@ import { inject, injectable } from 'inversify';
 import type { AppConfig } from '../../config/env';
 import { TYPES } from '../../core/di/types';
 import { AppError } from '../../core/errors/app-error';
+import { ErrorCode } from '@optiagent/shared';
 import type { Logger } from 'pino';
 
 export interface AiUserContext {
@@ -25,6 +26,14 @@ export interface AiIndexRequest {
   department?: string | null;
   mime_type: string;
   size_bytes: number;
+  // Versioning: the document being indexed is always the current latest.
+  version?: number;
+  is_latest?: boolean;
+  // Provenance — persisted into vector metadata for traceability/filtering.
+  department_id?: string | null;
+  uploaded_by?: string | null;
+  uploaded_at?: string | null;
+  document_status?: string | null;
 }
 
 export interface AiIndexResponse {
@@ -78,7 +87,7 @@ export class AiGateway implements IAiGateway {
   private readonly token: string;
 
   constructor(
-    @inject(TYPES.Config) private readonly config: AppConfig,
+    @inject(TYPES.Config) config: AppConfig,
     @inject(TYPES.Logger) private readonly log: Logger,
   ) {
     this.baseUrl = config.aiService.url;
@@ -110,7 +119,7 @@ export class AiGateway implements IAiGateway {
   }
 
   async health(): Promise<{ status: string }> {
-    const url = `${this.baseUrl}/health`;
+    const url = `${this.baseUrl}/api/v1/health`;
     const resp = await this._fetch(url, { method: 'GET' });
     return resp as { status: string };
   }
@@ -153,13 +162,13 @@ export class AiGateway implements IAiGateway {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.log.error({ url, error: msg }, 'ai_gateway:network_error');
-      throw new AppError(`AI service unreachable: ${msg}`, 502);
+      throw new AppError(`AI service unreachable: ${msg}`, 502, ErrorCode.INTERNAL);
     }
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       this.log.error({ url, status: response.status, body: text }, 'ai_gateway:error');
-      throw new AppError(`AI service error ${response.status}: ${text}`, 502);
+      throw new AppError(`AI service error ${response.status}: ${text}`, 502, ErrorCode.INTERNAL);
     }
 
     return response.json();

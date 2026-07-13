@@ -14,8 +14,8 @@ export class DashboardController {
     @inject(TYPES.DashboardService) private readonly svc: IDashboardService,
   ) {}
 
-  getStats = asyncHandler(async (_req, res) => {
-    const data = await this.svc.getStats();
+  getStats = asyncHandler(async (req, res) => {
+    const data = await this.svc.getStats(req.auth!.role);
     ApiResponse.success(res, data);
   });
 }

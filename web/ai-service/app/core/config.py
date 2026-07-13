@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     # ── LLM providers (Increment 8) ───────────────────────────────────────────
     anthropic_api_key: str = Field(default="")
     openai_api_key: str = Field(default="")
+    # Optional: override the OpenAI API base URL (e.g. https://api.groq.com/openai/v1 for Groq)
+    openai_base_url: str = Field(default="")
     # Provider: openai | anthropic | local (default local — no API key required)
     llm_provider: str = Field(default="local")
     llm_model: str = Field(default="gpt-4.1")

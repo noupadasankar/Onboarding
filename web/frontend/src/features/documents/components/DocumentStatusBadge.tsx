@@ -9,6 +9,7 @@ const STATUS_CONFIG: Record<
   INDEXING: { variant: 'brand', label: 'Indexing' },
   INDEXED: { variant: 'success', label: 'Indexed' },
   FAILED: { variant: 'danger', label: 'Failed' },
+  SUPERSEDED: { variant: 'default', label: 'Superseded' },
   DELETED: { variant: 'default', label: 'Deleted' },
 };
 

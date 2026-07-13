@@ -28,8 +28,9 @@ export enum Permission {
   USERS_MANAGE = 'users:manage',
 
   // Documents
-  DOCUMENTS_UPLOAD = 'documents:upload',
-  DOCUMENTS_MANAGE = 'documents:manage',
+  DOCUMENTS_VIEW = 'documents:view',       // view the Documents page and list
+  DOCUMENTS_UPLOAD = 'documents:upload',   // upload new documents
+  DOCUMENTS_MANAGE = 'documents:manage',   // delete / admin documents
 
   // Agent domains (used from later increments; declared here so RBAC is stable)
   HR_QUERY = 'hr:query',
@@ -43,16 +44,17 @@ export enum Permission {
 
 /** Immutable role → permission grants. */
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
+  // Employees can only chat — they never see or touch documents directly.
   [Role.EMPLOYEE]: [
     Permission.HR_QUERY,
     Permission.IT_QUERY,
-    Permission.DOCUMENTS_UPLOAD,
+    Permission.FINANCE_QUERY,
   ],
   [Role.HR_MANAGER]: [
     Permission.USERS_READ,
     Permission.USERS_MANAGE,
     Permission.HR_QUERY,
-    Permission.IT_QUERY,
+    Permission.DOCUMENTS_VIEW,
     Permission.DOCUMENTS_UPLOAD,
     Permission.DOCUMENTS_MANAGE,
     Permission.GOVERNANCE_READ,
@@ -61,7 +63,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   [Role.FINANCE_ADMIN]: [
     Permission.USERS_READ,
     Permission.FINANCE_QUERY,
-    Permission.IT_QUERY,
+    Permission.DOCUMENTS_VIEW,
     Permission.DOCUMENTS_UPLOAD,
     Permission.DOCUMENTS_MANAGE,
     Permission.GOVERNANCE_READ,
@@ -71,11 +73,56 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     Permission.USERS_WRITE,
     Permission.USERS_MANAGE,
     Permission.IT_QUERY,
+    Permission.DOCUMENTS_VIEW,
     Permission.DOCUMENTS_UPLOAD,
     Permission.DOCUMENTS_MANAGE,
     Permission.GOVERNANCE_READ,
   ],
 } as const;
+
+/**
+ * Canonical department identifiers. These match the unique `Department.name`
+ * values seeded in Postgres and the `department` metadata stored in ChromaDB, so
+ * the same token flows end-to-end: role → Postgres department → vector filter.
+ */
+export const DEPARTMENTS = {
+  HR: 'hr',
+  FINANCE: 'finance',
+  IT: 'it',
+} as const;
+
+export type DepartmentName = (typeof DEPARTMENTS)[keyof typeof DEPARTMENTS];
+
+/** Every department an admin role owns. Kept as a map so a new role → department
+ *  is a one-line change here (and nowhere else). Employees own no department. */
+const ROLE_HOME_DEPARTMENT: Readonly<Record<Role, DepartmentName | null>> = {
+  [Role.HR_MANAGER]: DEPARTMENTS.HR,
+  [Role.FINANCE_ADMIN]: DEPARTMENTS.FINANCE,
+  [Role.IT_ADMIN]: DEPARTMENTS.IT,
+  [Role.EMPLOYEE]: null,
+};
+
+/**
+ * The single department a role uploads to / administers. `null` for roles that
+ * do not own a department (EMPLOYEE). This is the low-level map; prefer the
+ * backend `DepartmentAccessService` which layers richer policy on top.
+ */
+export function departmentForRole(role: Role): DepartmentName | null {
+  return ROLE_HOME_DEPARTMENT[role] ?? null;
+}
+
+/**
+ * The set of departments a role may *read from* (chat retrieval / search).
+ * Admins are scoped to their own department; employees may query across all
+ * department knowledge bases (chat-only) — expressed as an explicit whitelist
+ * rather than "no filter", so adding a department never silently widens access.
+ */
+export function allowedDepartmentsForRole(role: Role): DepartmentName[] {
+  const home = departmentForRole(role);
+  if (home) return [home];
+  // EMPLOYEE (and any future read-only role): whitelist all knowledge bases.
+  return Object.values(DEPARTMENTS);
+}
 
 /** All roles as an array — handy for seeds, validation and UI. */
 export const ALL_ROLES: readonly Role[] = Object.values(Role);

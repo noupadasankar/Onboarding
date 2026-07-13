@@ -19,6 +19,12 @@ export const TYPES = {
   // AI
   AiGateway: Symbol.for('AiGateway'),
 
+  // Storage
+  StorageService: Symbol.for('StorageService'),
+
+  // Queue
+  IndexingQueue: Symbol.for('IndexingQueue'),
+
   // Repositories
   UserRepository: Symbol.for('UserRepository'),
   DepartmentRepository: Symbol.for('DepartmentRepository'),
@@ -57,6 +63,7 @@ export const TYPES = {
 
   // Domain services
   RoleCatalogService: Symbol.for('RoleCatalogService'),
+  DepartmentAccessService: Symbol.for('DepartmentAccessService'),
 
   // Dashboard module
   DashboardService: Symbol.for('DashboardService'),

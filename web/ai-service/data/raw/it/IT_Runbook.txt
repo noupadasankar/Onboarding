@@ -1,0 +1,873 @@
+================================================================================
+OPTIAGENT TECHNOLOGIES
+IT OPERATIONS RUNBOOK
+Document ID: OAT-IT-002  |  Version: 3.5  |  Effective: January 1, 2025
+Owner: VP IT Operations (Sanjay Mehta)  |  it.policy@optiagent.com
+Classification: Internal — IT Operations, Engineering, Security
+================================================================================
+
+This Runbook contains the operational procedures for the most common and
+critical IT activities at OptiAgent Technologies. It is the practitioner-level
+companion to the IT Governance Policy (OAT-IT-001).
+
+Procedures are written for the IT Operations team, DevSecOps team, and senior
+engineering staff. They assume familiarity with the tools listed.
+
+For policies and approval requirements, always refer to OAT-IT-001.
+For security incident procedures, also refer to Company Policy OAT-CP-001 S9.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+PART A: INCIDENT RESPONSE RUNBOOKS
+  A1. P1 Major Incident Response Procedure
+  A2. Security Incident Response Procedure
+  A3. Ransomware Response Procedure
+  A4. Data Breach Response Procedure
+  A5. Phishing Incident Response Procedure
+
+PART B: CHANGE MANAGEMENT RUNBOOKS
+  B1. Emergency Change Procedure
+  B2. Scheduled Maintenance Window Procedure
+  B3. Production Deployment Checklist
+  B4. Rollback Procedure
+
+PART C: ACCESS MANAGEMENT RUNBOOKS
+  C1. New Employee Account Provisioning
+  C2. Employee Offboarding / Access Deprovisioning
+  C3. Privileged Access Request Procedure
+  C4. MFA Reset Procedure
+  C5. Access Review Procedure
+
+PART D: INFRASTRUCTURE RUNBOOKS
+  D1. AWS Production Environment Recovery
+  D2. VPN / ZTNA Outage Response
+  D3. Database Backup and Restore Procedure
+  D4. Certificate Renewal Procedure
+  D5. Endpoint Patch Deployment Procedure
+
+PART E: DISASTER RECOVERY RUNBOOKS
+  E1. Full DR Invocation Procedure
+  E2. AWS Region Failover Procedure
+  E3. Corporate System Recovery Priority Order
+
+================================================================================
+PART A: INCIDENT RESPONSE RUNBOOKS
+================================================================================
+
+A1. P1 MAJOR INCIDENT RESPONSE PROCEDURE
+------------------------------------------
+
+TRIGGER: Any of the following automatically triggers P1:
+  - Production platform entirely unavailable (0% of users can access)
+  - Customer data potentially exposed or exfiltrated
+  - Security breach confirmed or strongly suspected
+  - Okta SSO completely unavailable (all employees locked out)
+  - PagerDuty fires a P1 alert on an uptime check for a Tier 1 system
+
+STEP 1 — DECLARE THE MAJOR INCIDENT (0–5 minutes)
+  □ On-call engineer confirms P1 severity and creates incident in ServiceNow
+  □ Assign "Major Incident" checkbox in ServiceNow (triggers MIM pager alert)
+  □ Post to Slack #incidents channel:
+    "🔴 P1 DECLARED: [System] is [symptom]. Incident ID: INC-XXXXXXX.
+     MIM: [Name]. Bridge: [Teams link]. Status: https://status.optiagent.com"
+  □ Update status.optiagent.com to "Investigating" (Statuspage.io — access via
+    Okta > Statuspage tile)
+
+STEP 2 — ASSEMBLE THE BRIDGE (5–15 minutes)
+  □ MIM opens Teams bridge: "OAT P1 Bridge – INC-XXXXXXX – [Date] [Time]"
+  □ Page/notify:
+    - On-call engineers for affected systems (auto-paged via PagerDuty)
+    - CISO (if any security dimension) — raj.anand@optiagent.com | +1-XXX-XXX-XXXX
+    - VP IT — sanjay.mehta@optiagent.com | +1-XXX-XXX-XXXX
+    - Engineering Director for affected system
+  □ If customer-facing outage > 30 minutes: notify
+    - CFO — alexandra.chen@optiagent.com
+    - CEO — [CEO mobile on PagerDuty runcard in CyberArk]
+  □ MIM takes notes in the incident timeline doc (ServiceNow work notes)
+
+STEP 3 — DIAGNOSE (15–60 minutes)
+  □ Review Datadog dashboards: [Service] Service Overview → Error rate, P99
+    latency, saturation
+  □ Check PagerDuty alert payload for the triggering metric
+  □ Review Sentry for recent error spikes in [Service]
+  □ Check AWS CloudWatch / GCP Cloud Monitoring for infrastructure anomalies
+  □ Check recent deployments: GitHub Actions pipeline runs in last 4 hours
+  □ Check recent changes: ServiceNow Change Log for changes in last 24 hours
+  □ Check Splunk SIEM for correlated security events if breach suspected
+  MIM posts diagnosis updates to Slack #incidents every 30 minutes:
+    "🔴 P1 UPDATE [HH:MM]: [Status]. Suspected cause: [X]. Investigating: [Y]."
+
+STEP 4 — MITIGATE OR RESOLVE (varies)
+  Depending on root cause — common mitigations:
+  □ Bad deployment → Rollback via ArgoCD (see B4 Rollback Procedure)
+  □ Database overload → Scale read replicas in AWS RDS console; enable
+    Connection Pooling (PgBouncer); kill long-running queries if identified
+  □ Cache failure → Flush Redis cache in ElastiCache; verify Memcached nodes
+  □ AWS AZ failure → Verify Route 53 health checks are routing away from
+    failed AZ; confirm ALB target groups show healthy targets in at least 1 AZ
+  □ Dependent API failure → Enable feature flags to disable affected features
+    (LaunchDarkly > [Service] > [Feature Flag]); enable cached/fallback responses
+  □ Security incident → Follow A2 (Security Incident Response) in parallel;
+    do NOT power off compromised machines; isolate at network layer
+
+STEP 5 — RESOLVE AND VERIFY (post-fix)
+  □ Verify resolution: error rate < 0.1% sustained for 10 minutes; P99 latency
+    within SLA; Datadog synthetic monitors passing
+  □ MIM declares incident resolved in ServiceNow: set Status = Resolved;
+    record actual start/end times; update Statuspage to "Resolved"
+  □ Post to Slack #incidents:
+    "✅ P1 RESOLVED [HH:MM]: [System] is fully operational. Duration: [X min].
+     Root cause: [brief summary]. PIR will be published within 5 business days."
+  □ Notify Customer Success to communicate with affected customers
+
+STEP 6 — POST-INCIDENT REVIEW (within 5 business days)
+  □ PIR author (incident owner) completes PIR template (ServiceNow KB0001234)
+  □ PIR content: Timeline | Root Cause (5 Whys) | Impact | What Went Well |
+    What Went Wrong | Action Items (owner + due date)
+  □ PIR review: Engineering Director / VP IT + CISO (if security)
+  □ PIR shared to: #incidents Slack, CISO, CTO, VP Engineering, CX lead
+  □ All action items tracked in ServiceNow as Problem Tasks
+
+================================================================================
+
+A2. SECURITY INCIDENT RESPONSE PROCEDURE
+------------------------------------------
+
+SCOPE: Use this procedure when a security incident is detected or suspected.
+This runs in parallel with A1 if the security incident also causes a P1 outage.
+Also see Company Policy OAT-CP-001 Section 9 for employee-facing guidance.
+
+IMMEDIATE ACTIONS (0–15 minutes):
+  □ SOC analyst creates Security Incident in ServiceNow (Category = Security)
+  □ Assign to CISO and on-call Security Engineer (PagerDuty)
+  □ Post to Slack #security-incidents (private channel — Security team only)
+  □ DO NOT discuss details in #general or other public channels
+  □ DO NOT power off potentially compromised machines — isolate at network layer
+
+CONTAINMENT (15–60 minutes):
+  □ Identify affected systems from Splunk SIEM alerts, GuardDuty findings,
+    CrowdStrike Falcon telemetry, or Wiz findings
+  □ Network isolation: Remove affected EC2 instance from target group (AWS
+    console > EC2 > Target Groups > deregister); do NOT terminate the instance
+  □ Credential rotation: Rotate any credentials (API keys, passwords, secrets)
+    that may have been compromised — use HashiCorp Vault for rotation
+  □ Block suspicious IPs/domains at Cloudflare WAF or Zscaler
+  □ Preserve evidence: Take EBS snapshots of affected instances before any
+    remediation; export CloudTrail logs and VPC Flow Logs for the incident period
+    to the Security Log Archive S3 bucket (immutable / Object Lock enabled)
+
+NOTIFICATION (within 1 hour of declaration):
+  □ P1 Security: CISO + CEO + CFO + General Counsel notified
+  □ P2 Security: CISO + VP IT notified
+  □ Customer data confirmed exposed: General Counsel + CISO invoke breach
+    notification procedure (see A4 Data Breach Response)
+
+ERADICATION AND RECOVERY:
+  □ Remove malicious artifacts identified by CrowdStrike Falcon
+  □ Patch the vulnerability that was exploited (emergency change — see B1)
+  □ Restore affected systems from known-good backup if integrity cannot be
+    confirmed (see D3 Database Backup and Restore or E1 DR Invocation)
+  □ Re-image any endpoint confirmed to have been compromised (do not clean —
+    always re-image)
+
+REGULATORY TIMELINE TRACKING:
+  □ GDPR / UK GDPR: 72 hours from knowledge of breach to notify supervisory
+    authority (ICO in UK; relevant DPA in EU). General Counsel tracks timer.
+  □ US State notification laws: General Counsel determines applicable states
+    and notification deadlines
+  □ Customer notification: coordinate with General Counsel and CEO
+
+================================================================================
+
+A3. RANSOMWARE RESPONSE PROCEDURE
+-----------------------------------
+
+TRIGGER: Ransomware note found on endpoint; files encrypting; antivirus alert;
+suspicious mass file modification detected by CrowdStrike or Datadog.
+
+IMMEDIATE (0–5 minutes):
+  □ DO NOT pay any ransom. Do not negotiate. Notify CISO and Legal immediately.
+  □ Isolate affected endpoints at the network layer:
+    - Remove from Cisco Meraki VLAN by changing switchport VLAN (Meraki Dashboard >
+      Switch > Ports > change to quarantine VLAN 999)
+    - Revoke Okta sessions for compromised user account (Okta Admin > Users >
+      [User] > Revoke all sessions)
+  □ DO NOT shut down the machine — preserve memory artifacts for forensics
+  □ DO NOT delete files or run cleanup tools — preserve forensic evidence
+  □ Alert CISO, VP IT, CEO, CFO, General Counsel immediately (bridge call)
+
+SCOPE ASSESSMENT (5–30 minutes):
+  □ In CrowdStrike Falcon: Investigate > Incident > identify Patient Zero
+  □ Check lateral movement indicators: Falcon process tree, Splunk SPL query:
+    index=endpoint source="crowdstrike" process_name IN ("wmic.exe","psexec.exe",
+    "net.exe","nltest.exe","mimikatz.exe","cobalt*")
+  □ Determine if spread to file shares (check NAS/SharePoint activity in Defender)
+  □ Determine if domain controller is affected — if yes, escalate to full DR
+
+IF DOMAIN CONTROLLER OR BACKUP INFRASTRUCTURE AFFECTED:
+  □ Invoke Full DR Procedure (E1)
+  □ Do not rely on any potentially compromised backup
+
+RECOVERY:
+  □ AWS: Restore from last known-good backup (AWS Backup Vault — immutable;
+    Vault Lock protects against deletion)
+  □ Endpoints: Re-image from golden image in Intune (Autopilot fresh start)
+  □ Credentials: Full credential rotation across all systems (prioritize:
+    AD/Entra, AWS IAM, Okta, Vault, database passwords, API keys)
+  □ Post-incident: Engage CrowdStrike Services or third-party IR firm for
+    full forensic investigation
+
+================================================================================
+
+A4. DATA BREACH RESPONSE PROCEDURE
+------------------------------------
+
+TRIGGER: Confirmed or suspected unauthorized access to, exfiltration of, or
+exposure of personal data (PII, PHI) or Restricted company data.
+
+LEGAL TIMER STARTS: When you have "knowledge" of the breach (not suspicion).
+  □ General Counsel starts the 72-hour GDPR clock in their breach tracker
+  □ CISO maintains the technical incident timeline in ServiceNow
+
+IMMEDIATE NOTIFICATIONS (within 1 hour):
+  □ CISO + General Counsel + CEO + CFO + CPO
+  □ If customer data: VP Customer Success alerted for potential customer comms
+  □ If employee data: CPO (Priya Sharma) alerted
+
+BREACH INVESTIGATION:
+  □ Identify: What data was accessed/exfiltrated? Whose data? How much?
+    Use Splunk, Datadog, CloudTrail, and S3 server access logs to reconstruct
+  □ Preserve: Export all relevant logs to immutable storage immediately
+  □ Quantify: Number of individuals affected; data types (name, email, health,
+    financial, credentials, etc.); countries of affected individuals
+  □ Cause: How did the breach occur? What vulnerability or control failure?
+
+REGULATORY NOTIFICATIONS:
+  □ GDPR/UK GDPR: Notify ICO (UK) / relevant EU DPA within 72 hours of
+    knowledge. Notification template: Legal SharePoint > Breach Notification Templates
+  □ If 250+ EU individuals affected: Full Article 33 notification required
+  □ US: Assess state breach notification laws (General Counsel leads);
+    California (CCPA) requires notification within 72 hours of discovery
+  □ India (DPDP Act 2023): Notify CERT-In within 6 hours; notify Data
+    Protection Board as required
+  □ Singapore: PDPA mandatory breach notification to PDPC and affected
+    individuals within 3 days
+
+CUSTOMER NOTIFICATION:
+  □ Customers whose data was affected must be notified per their DPA terms
+  □ Draft notification: General Counsel + CPO + CEO approval required
+  □ Delivery: Via Customer Success team; VP CS coordinates
+
+================================================================================
+
+A5. PHISHING INCIDENT RESPONSE PROCEDURE
+------------------------------------------
+
+EMPLOYEE REPORTS PHISHING EMAIL:
+  □ Employee uses Phish Alert Button (PAB) in Outlook to report, OR
+  □ Employee forwards to security@optiagent.com
+
+SOC ACTIONS (within 30 minutes of report):
+  □ SOC analyst reviews the reported email in Microsoft Defender for Office 365
+  □ Determine: Is this a phishing simulation (KnowBe4)? Check KnowBe4 console.
+  □ If real phishing:
+    - Extract: sender domain, sending IP, link domains, attachment hash
+    - Quarantine all copies of the email from all mailboxes:
+      M365 Admin > Security > Threat Management > Threat Explorer > Purge
+    - Block sender domain/IP in Proofpoint and Microsoft Defender
+    - Block malicious URLs in Zscaler (Custom URL Categories > Malicious-Phishing)
+
+IF EMPLOYEE CLICKED THE LINK OR OPENED ATTACHMENT:
+  □ Treat as Security Incident — escalate to A2 procedure
+  □ Isolate the endpoint at network layer (switch VLAN to quarantine)
+  □ Revoke all active Okta sessions for the affected user
+  □ Force password reset for the affected user account via Okta
+  □ Check email sent from the affected account in last 2 hours for BEC indicators
+  □ Check if MFA was bypassed (review Okta System Log for MFA challenges)
+  □ CrowdStrike: Review endpoint process timeline on the affected machine
+
+COMMUNICATION:
+  □ If targeted phishing campaign (multiple employees targeted):
+    - Send security alert to all staff via IT Security alias with safe
+      description of the phishing characteristics (do not include live links)
+  □ Document in ServiceNow; track as Security Incident
+
+================================================================================
+PART B: CHANGE MANAGEMENT RUNBOOKS
+================================================================================
+
+B1. EMERGENCY CHANGE PROCEDURE
+--------------------------------
+
+USE WHEN: A change is required urgently to restore service or prevent imminent
+harm and cannot wait for the standard CAB approval cycle.
+
+STEP 1 — IMPLEMENT FIRST (if P1 emergency):
+  □ The on-call engineer or MIM authorizes the change verbally during the P1
+    bridge (recorded in ServiceNow work notes with timestamp and name)
+  □ Implement the minimum necessary change to restore service or prevent harm
+
+STEP 2 — DOCUMENT IN SERVICENOW (during or immediately after):
+  □ Create Change Request in ServiceNow; set Type = Emergency
+  □ Complete all fields including: business justification, systems affected,
+    risk assessment, steps taken, and rollback plan (even retrospectively)
+  □ Note in the change record: "Emergency change; implemented at [HH:MM] by
+    [Name] under P1 bridge authorization by [MIM Name] / CISO / VP IT"
+
+STEP 3 — CAB RETROSPECTIVE (within 48 hours):
+  □ MIM submits completed Change Request to CAB for retrospective review
+  □ CAB meets (can be async via Teams if urgency requires) to:
+    - Review the change for correctness and completeness
+    - Identify any risks introduced that need follow-up
+    - Formally close or escalate as a Problem if root cause work is needed
+  □ CAB decision is recorded in the Change Request
+
+================================================================================
+
+B2. SCHEDULED MAINTENANCE WINDOW PROCEDURE
+--------------------------------------------
+
+STANDARD MAINTENANCE WINDOWS (all times in local office timezone):
+  - US systems: Saturday 02:00–06:00 ET
+  - UK systems: Saturday 02:00–06:00 GMT/BST
+  - India systems: Sunday 02:00–06:00 IST
+  - Germany systems: Saturday 02:00–06:00 CET/CEST
+  - Singapore systems: Sunday 02:00–06:00 SGT
+  - Production (global): Saturday 02:00–04:00 ET (preferred)
+
+NOTIFICATION REQUIREMENTS:
+  □ Standard maintenance: 5 business days notice via:
+    - IT Communications email to it.communications@optiagent.com
+      (distributes to all staff)
+    - Statuspage.io scheduled maintenance notice
+    - Slack #it-announcements channel
+  □ Customer-affecting maintenance: 7 days notice via Customer Success
+    → customers; post on status.optiagent.com
+  □ Major maintenance (> 4 hours): 10 business days notice; VP IT approval
+
+DURING MAINTENANCE:
+  □ Update Statuspage to "Scheduled Maintenance — In Progress"
+  □ Assign a maintenance coordinator (rotation: IT Ops team)
+  □ Keep detailed time-stamped notes in the Change Request work notes
+  □ Test completion criteria before declaring maintenance complete
+  □ If maintenance overruns window: invoke Emergency Change procedure for
+    the overrun or rollback and reschedule
+
+================================================================================
+
+B3. PRODUCTION DEPLOYMENT CHECKLIST
+--------------------------------------
+
+Complete this checklist before every production deployment via GitHub Actions
+/ ArgoCD. For hotfixes, complete items 1–8 minimum.
+
+PRE-DEPLOYMENT:
+  □ 1. All unit, integration, and regression tests passing in CI
+  □ 2. SAST (SonarQube/Semgrep): No Critical or High findings unresolved
+  □ 3. SCA (Snyk): No Critical or High CVE in dependencies unresolved
+  □ 4. Container scan (Trivy): No Critical or High CVE in base image
+  □ 5. Change Request approved in ServiceNow (or Emergency Change authorized)
+  □ 6. Rollback plan documented and tested (see B4)
+  □ 7. On-call engineer confirmed available for 2 hours post-deployment
+  □ 8. Feature flags configured: new features behind flags for canary rollout
+  □ 9. Database migrations: dry-run migration in staging; confirm zero downtime
+       (use blue-green migration for schema changes that lock tables)
+  □ 10. Load test results: for significant changes, confirm staging load test
+        met P99 SLA thresholds
+
+DEPLOYMENT:
+  □ 11. Deploy to production via ArgoCD (Kubernetes GitOps): apply commit to
+        production overlay; ArgoCD syncs
+  □ 12. Monitor deployment progress in ArgoCD console; watch pod rollout:
+        kubectl rollout status deployment/[service-name] -n production
+  □ 13. Canary: first 5% of traffic → new version; monitor error rate 5 min
+  □ 14. If error rate < 0.1% at 5%: promote to 25%; monitor 10 min
+  □ 15. If error rate < 0.1% at 25%: promote to 100%
+  □ 16. At each stage: confirm in Datadog Service Overview; check Sentry
+
+POST-DEPLOYMENT VERIFICATION:
+  □ 17. Run Datadog Synthetic tests for critical user flows (< 5 min runtime)
+  □ 18. Confirm key business metrics (signups, API calls, revenue events)
+        unchanged or improved in Datadog dashboard
+  □ 19. If using a database migration: verify migration completed in application
+        logs; check row counts in RDS if significant data change expected
+  □ 20. Post deployment summary to #deployments Slack channel:
+        "✅ [Service] v[version] deployed to production at [HH:MM].
+         Deployed by: [name]. Change: CHG-2025-XXX. Status: Healthy."
+
+ROLLBACK TRIGGER CONDITIONS:
+  Automatically rollback if any of the following occur within 30 min of deploy:
+  □ Error rate > 1% sustained for 5 minutes
+  □ P99 latency > 2x pre-deployment baseline
+  □ Any P1 alert fires on the affected service
+  □ On-call engineer judgment that the deployment caused degradation
+
+================================================================================
+
+B4. ROLLBACK PROCEDURE
+-----------------------
+
+KUBERNETES / ARGOCD ROLLBACK (most services):
+  □ In ArgoCD console: select Application > History > click previous version >
+    "Rollback" button; confirm
+  OR via CLI:
+  □ kubectl rollout undo deployment/[service-name] -n production
+  □ Monitor: kubectl rollout status deployment/[service-name] -n production
+  □ Verify in Datadog that error rate returns to baseline within 5 minutes
+
+DATABASE MIGRATION ROLLBACK:
+  □ If schema migration caused the issue, assess rollback feasibility:
+    - Additive-only migrations (add column, add index): safe to rollback by
+      removing the added object; no data loss
+    - Destructive migrations (drop column, rename, type change): rollback may
+      cause data loss — engage Engineering Director and DBA before proceeding
+  □ Most migrations use Flyway or Liquibase — execute rollback scripts:
+    flyway -url=[DB_URL] -user=[USER] -password=[PASS] undo
+  □ For zero-downtime rollbacks: use feature flags to disable feature that
+    uses the new schema before rolling back the migration
+
+STATIC ASSET / CDN ROLLBACK (Cloudflare Workers / S3):
+  □ Cloudflare Workers: Dashboard > Workers > [Worker] > Settings >
+    Deployments > Rollback to previous version
+  □ S3 + CloudFront: In CloudFront distribution, update origin path to
+    previous S3 prefix; invalidate CloudFront cache:
+    aws cloudfront create-invalidation --distribution-id [ID] --paths "/*"
+
+================================================================================
+PART C: ACCESS MANAGEMENT RUNBOOKS
+================================================================================
+
+C1. NEW EMPLOYEE ACCOUNT PROVISIONING
+---------------------------------------
+
+TRIGGER: HR sets employee start date in Workday (minimum 5 business days
+before start date for on-time provisioning).
+
+AUTOMATED (Workday → Okta via SCIM):
+  □ Workday pushes employee record to Okta via SCIM integration at T-2 days
+  □ Okta creates user account; assigns groups based on Department and Job Title:
+    - All employees: Microsoft365-AllUsers, Slack-AllUsers, Workday-Users,
+      ServiceNow-EndUser, Confluence-Reader, LDPortal-Users
+    - Engineering: GitHub-EnterpriseUsers, Jira-ProjectMembers, Datadog-ReadOnly
+    - Sales: Salesforce-StandardUser, Outreach-Users
+    - Finance: NetSuite-User, Anaplan-Viewer
+    - IT Operations: ServiceNow-ITAgent, Datadog-Admin (IT role only)
+  □ Microsoft 365 license auto-assigned (Business Premium)
+  □ Email account created: firstname.lastname@optiagent.com
+  □ Temporary Okta password generated and sent via automated SMS to employee's
+    personal mobile (captured in Workday pre-joining portal)
+
+MANUAL CHECKS (IT Helpdesk, T-1 day before start):
+  □ Verify Okta account active and groups assigned correctly
+  □ Verify email account created and accessible
+  □ Verify hardware is ready (laptop imaged; asset record created in ServiceNow)
+  □ For Engineering: verify GitHub seat assigned; Jira license assigned
+  □ For privileged roles (CISO, VP IT, Security, DevSecOps): request CyberArk
+    privileged account via ServiceNow separately; requires CISO approval
+
+DAY 1 ACTIONS (IT Helpdesk):
+  □ Issue laptop; have employee sign Equipment Receipt in Workday
+  □ Guide employee through Okta first login and MFA enrollment (see IT
+    Orientation checklist in Onboarding Process HR-OP-001 Section 3.4)
+  □ Issue YubiKey if required (engineering leads, security, IT ops, execs)
+  □ Update asset record in ServiceNow with assigned-to employee
+
+================================================================================
+
+C2. EMPLOYEE OFFBOARDING / ACCESS DEPROVISIONING
+--------------------------------------------------
+
+SLA: All access revoked by 6 PM on last working day (security-critical SLA).
+
+TRIGGER: HR sets termination date in Workday.
+
+FOR VOLUNTARY RESIGNATION (standard notice period):
+TRIGGER DATE: HR sets termination date at T-notice (30/60/90 days ahead).
+  □ T-5 business days: IT Helpdesk lead reviews the offboarding ticket in
+    ServiceNow (auto-created by Workday–ServiceNow integration)
+  □ T-1 day: Pre-stage deprovisioning actions; verify laptop return logistics
+
+ON LAST WORKING DAY (automated + manual):
+  □ [Auto] Workday pushes termination to Okta via SCIM at 18:00 local time
+  □ [Auto] Okta deactivates account → terminates all active SSO sessions
+    including M365, Slack, Salesforce, GitHub, Workday, ServiceNow
+  □ [Auto] Microsoft 365 license de-assigned; mailbox placed in litigation hold
+    for 90 days (Exchange Online retention policy)
+  □ [Manual] IT Helpdesk verifies Okta deactivation within 30 minutes of 18:00
+  □ [Manual] GitHub: verify seat de-assigned (Okta SCIM handles; confirm in
+    GitHub org member list)
+  □ [Manual] CyberArk: deprovision any privileged accounts manually (SCIM does
+    not cover CyberArk); verify in CyberArk admin console
+  □ [Manual] Rotate any shared credentials the departing employee had access to
+    (check CyberArk session history to identify)
+  □ [Manual] Revoke any API keys or tokens created by the departing employee
+    (check GitHub Personal Access Tokens, AWS IAM user keys, Okta API tokens)
+  □ [Manual] Collect laptop, YubiKey, access badge, and any other company
+    equipment per the Equipment Return checklist in Workday
+
+FOR IMMEDIATE TERMINATION (involuntary, effective immediately):
+  □ HR notifies CISO and VP IT directly via phone/Teams (do not rely on
+    automated Workday flow for speed)
+  □ IT immediately disables Okta account manually: Okta Admin > Users >
+    [User] > Deactivate (do not wait for SCIM sync)
+  □ All remaining steps same as above but executed immediately, not at 18:00
+  □ If employee is on-site at time of termination: Facilities to escort to exit;
+    access badge deactivated immediately via Lenel S2 (physical access system)
+  □ CISO notified of completion within 15 minutes of trigger
+
+POST-OFFBOARDING:
+  □ IT Helpdesk closes offboarding ticket in ServiceNow after all items confirmed
+  □ Manager is given read-only access to the departing employee's email for 30
+    days (in case of outstanding business emails) — set up via M365 admin
+  □ Shared mailboxes, distribution lists, and Slack channels the employee owned
+    must be reassigned within 3 business days
+
+================================================================================
+
+C3. PRIVILEGED ACCESS REQUEST PROCEDURE
+-----------------------------------------
+
+DEFINITION: Privileged access includes:
+  - AWS production console (AdministratorAccess or PowerUserAccess policies)
+  - RDS database production access (DBA or higher)
+  - CyberArk vault access
+  - Okta Super Administrator role
+  - GitHub organization owner role
+  - Root account credentials (stored in CyberArk; accessible to CISO only)
+
+REQUEST PROCESS:
+  □ Step 1: Engineer submits ServiceNow request: Category = Security >
+    Sub-category = Privileged Access Request; includes business justification,
+    specific access needed, and duration
+  □ Step 2: Engineer's manager approves in ServiceNow
+  □ Step 3: CISO or DevSecOps Director approves in ServiceNow
+  □ Step 4: IT Security provisions the JIT (just-in-time) access in CyberArk
+    for the specified duration (maximum 8 hours per session; maximum 5 days
+    for an ongoing project)
+  □ Step 5: All privileged sessions are recorded in CyberArk; engineer is
+    notified that their session will be recorded before access is granted
+
+BREAK-GLASS ACCOUNTS:
+  For true emergencies where CyberArk JIT is unavailable:
+  □ Break-glass account credentials stored in CyberArk vault: "OAT-Breakglass"
+  □ Access requires: CISO + one additional C-level or Director approval (voice)
+  □ Dual access: break-glass credentials require two separate staff to combine
+    their authentication factors to reconstruct the credential
+  □ Usage is immediately alerted to CISO via PagerDuty
+  □ Audit log is automatically created; usage reviewed in next CAB meeting
+
+================================================================================
+
+C4. MFA RESET PROCEDURE
+-------------------------
+
+TRIGGER: Employee cannot access their MFA device (lost phone, new phone,
+lost YubiKey) and cannot log in to Okta.
+
+STEP 1 — VERIFY IDENTITY:
+  IT Helpdesk must verify the employee's identity before resetting MFA.
+  Required verification (at least 2 of the following):
+  □ Video call with employee showing company-issued photo ID (passport or
+    national ID); face must match Workday profile photo
+  □ Manager video confirmation (manager joins the call and confirms identity)
+  □ Known device authentication (if employee has another enrolled device)
+  □ HR confirmation (HRBP confirms via separate channel that the request is
+    from the legitimate employee)
+  DO NOT reset MFA based on email request alone — email may be compromised.
+
+STEP 2 — RESET MFA:
+  □ Okta Admin > Users > [User] > Reset Authenticators
+  □ Select only the lost authenticator (do not reset all if one device remains)
+  □ Employee will be prompted to re-enroll on next login
+  □ Document the reset in ServiceNow: INC-XXXXXX; note verification method used
+
+STEP 3 — YUBIKEY LOST:
+  □ Report immediately to IT Security and Facilities (physical token)
+  □ Revoke the YubiKey in Okta: Users > [User] > Security Keys > Remove
+  □ Disable the YubiKey serial in the YubiKey Manager inventory
+  □ Issue replacement YubiKey from spare pool (OAT-KEY-SPARE in ServiceNow)
+  □ Security incident log created: MIM-SEC-[date] — lost hardware token
+  □ Investigate if YubiKey loss may have been theft (location, circumstances)
+
+================================================================================
+
+C5. ACCESS REVIEW PROCEDURE
+-----------------------------
+
+SCHEDULE:
+  - Production / Restricted systems: Quarterly (Jan, Apr, Jul, Oct — 1st week)
+  - Confidential systems (HR, Finance, Legal): Bi-annual (Jan, Jul)
+  - All systems (SOC 2 annual): Annual (January)
+
+PROCESS:
+  □ IT Security exports access report from each system in scope (Okta, AWS IAM,
+    GitHub, Salesforce, NetSuite, CyberArk) for the review period
+  □ Reports distributed to system owners and HRBPs in ServiceNow access review
+    task: "Review Access: [System] — [Date]"
+  □ System owner reviews each user entry: Certify (access appropriate) or
+    Revoke (access no longer needed)
+  □ Deadline: 10 business days from task assignment
+  □ Users whose access is not certified within the deadline: access suspended
+    automatically by IT Security and the system owner notified
+  □ Revoked access must be removed within 5 business days of revocation decision
+  □ Results documented in ServiceNow; summary shared with CISO and Internal Audit
+
+================================================================================
+PART D: INFRASTRUCTURE RUNBOOKS
+================================================================================
+
+D1. AWS PRODUCTION ENVIRONMENT RECOVERY
+-----------------------------------------
+
+PRODUCTION ARCHITECTURE (us-east-1 primary, us-west-2 DR):
+  - Application: ECS Fargate clusters behind ALB; auto-scaling groups
+  - Database: Amazon RDS PostgreSQL 15 (Multi-AZ in us-east-1;
+    cross-region read replica in us-west-2 for DR)
+  - Cache: Amazon ElastiCache (Redis 7.x; Multi-AZ cluster mode)
+  - Object Storage: S3 with versioning and cross-region replication to us-west-2
+  - DNS: Route 53 with health checks and failover routing policies
+  - Secrets: HashiCorp Vault (HCP; deployed across 3 AZs)
+  - CDN: Cloudflare in front of ALB (proxied A records)
+
+SINGLE AZ FAILURE (most common):
+  □ Route 53 health check detects unhealthy target; re-routes to healthy AZ
+    within 30–60 seconds (automated; no manual action required)
+  □ RDS Multi-AZ: automatic failover to standby within 60–120 seconds
+  □ ECS: tasks re-scheduled to healthy AZ within 2–3 minutes
+  □ Verify in Datadog Service Overview: error rate should recover within 5 min
+  □ Check RDS console to confirm failover completed and new primary is healthy
+  □ Post status update: "Identified an AZ issue in [region]; automated failover
+    in progress; monitoring."
+
+FULL REGION FAILURE (us-east-1 down) — invoke DR:
+  □ Declare P1; assemble bridge; invoke E2 (AWS Region Failover Procedure)
+
+DATABASE RECOVERY (RDS restore from backup):
+  □ Navigate to: AWS Console > RDS > Automated Backups > [DB Instance]
+  □ Select restore point (point-in-time recovery; min RPO 5 min for Multi-AZ)
+  □ Restore to new RDS instance: select instance class (minimum r6i.2xlarge
+    for production); VPC: production-vpc; subnet group: production-db-subnet
+  □ After restore: update application configuration in Vault to point to new
+    endpoint; trigger ECS service re-deployment to pick up new DB endpoint
+  □ Total estimated time for RDS restore + application reconfiguration: 2–4 hours
+
+================================================================================
+
+D3. DATABASE BACKUP AND RESTORE PROCEDURE
+-------------------------------------------
+
+BACKUP SCHEDULE:
+  - RDS PostgreSQL (production): Automated backups every 5 min (continuous WAL
+    archiving); daily snapshots at 03:00 UTC; retained 35 days
+  - RDS snapshots: Manual weekly snapshot; retained 90 days; replicated to
+    us-west-2 (cross-region)
+  - MongoDB Atlas (if used): Continuous backup with 1-min restore granularity;
+    managed by Atlas; 7-day PIT retention
+  - Application data in S3: Versioning enabled; cross-region replication to
+    us-west-2; lifecycle policy to Glacier after 90 days
+
+RESTORE TEST (monthly):
+  □ Select a daily snapshot from 7 days ago
+  □ Restore to a temporary RDS instance in the staging VPC
+  □ Run automated integrity checks (row count validation, checksum comparison
+    against last known state using Terraform output stored in S3)
+  □ Confirm restore success in the DR Test Report; update ServiceNow DR task
+  □ Terminate the temporary instance after validation (cost control)
+
+PRODUCTION RESTORE PROCEDURE:
+  □ Only authorized by CISO + VP Engineering (requires ServiceNow emergency
+    change approval)
+  □ Determine restore point (communicate to stakeholders: all transactions
+    after this point will be lost — confirm acceptable)
+  □ Use AWS CLI or console to initiate point-in-time restore:
+    aws rds restore-db-instance-to-point-in-time \
+      --source-db-instance-identifier optiagent-prod-postgres \
+      --target-db-instance-identifier optiagent-prod-postgres-restored \
+      --restore-time [ISO8601 timestamp]
+  □ Update Vault secret for database URL to new endpoint
+  □ ECS service restart to pick up new connection string
+  □ Validate application health; post-restore validation checklist in ServiceNow
+
+================================================================================
+
+D4. CERTIFICATE RENEWAL PROCEDURE
+------------------------------------
+
+CERTIFICATE INVENTORY:
+  All TLS certificates are tracked in ServiceNow (Certificate Management module)
+  with 90-day expiry alerts configured in Datadog (synthetic monitors check TLS
+  expiry and alert at < 60 days).
+
+RENEWAL TYPES:
+  □ Let's Encrypt (automated via cert-manager in Kubernetes):
+    - Certificates auto-renew at 30 days before expiry
+    - Monitor: kubectl get certificates -n production
+    - If auto-renewal fails: check cert-manager logs and DNS-01 challenge
+      permissions; escalate to DevSecOps
+
+  □ CA-signed certificates (customer-facing, code signing, email S/MIME):
+    - Renewal trigger: Datadog alert at < 60 days expiry OR ServiceNow
+      task created at T-90 days
+    - Procurement: DevSecOps purchases renewal from DigiCert (company account)
+    - CSR generation: use existing private key where possible; new key required
+      for compromised or algorithm change
+    - Validation: DV (Domain Validated) for standard; OV (Organization
+      Validated) for customer-facing APIs; EV (Extended Validation) not used
+    - Deployment: via ServiceNow Change Request; AWS Certificate Manager
+      for AWS-hosted endpoints (automated deployment to ALB/CloudFront);
+      manual installation for other systems
+    - Verify: ssl-checker.online or: openssl s_client -connect [domain]:443
+      | openssl x509 -noout -dates
+
+================================================================================
+
+D5. ENDPOINT PATCH DEPLOYMENT PROCEDURE
+-----------------------------------------
+
+PATCH RINGS:
+  Ring 0 (Pilot): IT Helpdesk staff (20 devices) — patches deploy immediately
+  Ring 1 (Early Adopter): Volunteer employees (50 devices) — T+3 days
+  Ring 2 (Broad): All remaining managed devices — T+7 days (standard patches)
+                                                    T+24 hours (Critical CVE)
+
+MONTHLY PATCH DEPLOYMENT:
+  □ Patch Tuesday + 1 day: Download patches to Intune (automatic for Windows
+    Update for Business and Apple Business Manager)
+  □ Create Intune Update Ring in: Endpoint Manager > Devices > Update Rings
+    - Ring 0: Immediately; Ring 1: 3-day deferral; Ring 2: 7-day deferral
+  □ Monitor compliance in Intune: Devices > Monitor > Update compliance report
+  □ Non-compliant devices at T+14 days: Intune blocks access to corporate
+    resources (Conditional Access policy: require compliant device)
+  □ Servers (EC2, on-prem): patching coordinated via Change Management (B2);
+    standard window: Saturday 02:00–06:00 ET; use AWS SSM Patch Manager
+
+================================================================================
+PART E: DISASTER RECOVERY RUNBOOKS
+================================================================================
+
+E1. FULL DR INVOCATION PROCEDURE
+----------------------------------
+
+TRIGGER: VP IT or CISO declares a Disaster Recovery Event — typically when
+the primary production region (us-east-1) is unavailable or compromised for
+> 2 hours with no recovery in sight, or when a ransomware or catastrophic
+data loss event requires failover.
+
+DECISION AUTHORITY:
+  VP IT + CISO joint decision; CEO notified immediately.
+
+STEP 1 — DECLARE DR (0–15 minutes):
+  □ VP IT sends DR declaration to: CEO, CFO, CTO, CPO, CISO, VP Engineering,
+    VP CS, General Counsel
+  □ Create Major Incident INC-DR-[date] in ServiceNow
+  □ Activate DR Teams channel: "OAT DR [Date] — Command Bridge"
+  □ Notify all staff via IT Communications and Slack #emergency:
+    "⚠️ OptiAgent is experiencing a major infrastructure event. IT and
+     Engineering are actively responding. Updates every 30 minutes."
+
+STEP 2 — ACTIVATE DR REGION (us-west-2):
+  □ Follow E2 AWS Region Failover Procedure
+  □ Activate Workday manual processes (HR manual fallback checklist in
+    SharePoint > HR > Contingency)
+  □ NetSuite: verify access via DR URL (provided by Oracle); Finance team
+    shifts to manual close if NetSuite unavailable
+
+STEP 3 — COMMUNICATIONS:
+  □ Customer-facing status: Update status.optiagent.com to "Major Outage"
+  □ Customer Communication: VP CS coordinates outreach to Enterprise customers
+    within 1 hour of DR declaration
+  □ Staff update: Every 30 minutes via Slack #emergency and email
+
+STEP 4 — RESTORE PRODUCTION REGION:
+  □ Once primary region is stable: run validation checklist before re-routing
+    traffic back (avoid flapping)
+  □ Data reconciliation: confirm DR region data is consistent with pre-event
+    state; identify and resolve any data discrepancy with Finance and product teams
+  □ Declare "DR Lifted" via same communication channels
+
+E2. AWS REGION FAILOVER PROCEDURE (us-east-1 → us-west-2)
+------------------------------------------------------------
+
+PRE-FAILOVER (automated within 4 hours RTO):
+  □ Route 53 failover records: "optiagent.com" and "api.optiagent.com" have
+    health check-based failover routing already configured
+    → Health check failure in us-east-1 triggers automatic DNS failover
+    → DNS TTL: 60 seconds (short; allows fast failover)
+    → Verify: Route 53 > Health Checks > confirm us-east-1 health check is red
+
+DATABASE FAILOVER (manual intervention required if automated replication lapsed):
+  □ In us-west-2: Promote cross-region RDS read replica to standalone primary:
+    AWS Console > RDS > [replica] > Actions > Promote
+    OR: aws rds promote-read-replica --db-instance-identifier optiagent-dr-postgres
+  □ Update Vault (HCP — available cross-region): write new DB endpoint:
+    vault kv put secret/production/database url=[new-endpoint]
+  □ ECS in us-west-2: service already running in reduced capacity (DR standby);
+    scale up desired count to production capacity:
+    aws ecs update-service --cluster optiagent-dr --service api-service
+      --desired-count 20 --region us-west-2
+
+VERIFICATION:
+  □ Synthetic monitors (Datadog) confirm API responses from us-west-2 endpoint
+  □ Run smoke test suite against DR environment
+  □ Confirm Cloudflare is routing to us-west-2 ALB (Cloudflare Analytics)
+
+E3. CORPORATE SYSTEM RECOVERY PRIORITY ORDER
+---------------------------------------------
+
+When restoring multiple failed systems, prioritize in this order:
+
+  PRIORITY 1 (restore within RTO — see SLA Register):
+    1. Okta SSO (without this nothing else is accessible)
+    2. OptiAgent Production Platform (customer-facing)
+    3. Corporate Email (Exchange Online)
+
+  PRIORITY 2:
+    4. GitHub (source code and CI/CD)
+    5. Slack (team communication)
+    6. Zscaler / VPN (remote access)
+    7. PagerDuty (alerting)
+
+  PRIORITY 3:
+    8. Workday (HR — daily payroll cutoff is the key deadline)
+    9. NetSuite (Finance — month-end close deadline drives urgency)
+    10. Salesforce (CRM — Sales team manual process fallback available)
+    11. ServiceNow (ITSM — manual ticketing fallback via email)
+
+  PRIORITY 4:
+    12. Datadog (observability)
+    13. Confluence/Jira (project management)
+    14. All other internal tools
+
+================================================================================
+DOCUMENT CONTROL
+================================================================================
+
+Document ID:    OAT-IT-002
+Version:        3.5
+Effective:      January 1, 2025
+Owner:          VP IT Operations — Sanjay Mehta
+Co-owners:      CISO — Raj Anand; Director DevSecOps — Arjun Sharma
+Approved by:    Sanjay Mehta (VP IT); Raj Anand (CISO)
+Next Review:    July 1, 2025 (semi-annual due to operational nature)
+
+Related Documents:
+  IT Governance Policy:       OAT-IT-001 (IT_Policy.docx)
+  Company Policy:             OAT-CP-001 (Company_Policy.docx)
+  Employee Handbook:          HR-EH-001
+  Onboarding Process:         HR-OP-001 (Onboarding_Process.txt)
+  Finance Policy:             OAT-FP-001 (Finance_Policy.docx)
+  IT Asset Register:          IT_Asset_Register.xlsx
+
+Emergency Contacts (also stored in PagerDuty runcard in CyberArk):
+  VP IT Operations:           sanjay.mehta@optiagent.com
+  CISO:                       raj.anand@optiagent.com
+  IT Helpdesk:                it.help@optiagent.com
+  Security SOC (24/7):        security@optiagent.com
+  IT Status Page:             status.optiagent.com
+  ServiceNow Portal:          it.optiagent.com/helpdesk
+
+================================================================================
+END OF DOCUMENT
+================================================================================

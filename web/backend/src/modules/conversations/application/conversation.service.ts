@@ -12,6 +12,7 @@ import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../core/di/types';
 import { ForbiddenError, NotFoundError } from '../../../core/errors/app-error';
 import type { IAiGateway } from '../../../infrastructure/ai/ai-gateway';
+import type { IDepartmentAccessService } from '../../../core/auth/department-access.service';
 import type {
   ConversationDetailDTO,
   ConversationDTO,
@@ -22,7 +23,6 @@ import type { Logger } from 'pino';
 export interface ChatInput {
   userId: string;
   userRole: string;
-  userDepartment?: string | null;
   conversationId?: string | null;
   question: string;
   departmentHint?: string | null;
@@ -68,6 +68,8 @@ export class ConversationService implements IConversationService {
   constructor(
     @inject(TYPES.ConversationRepository) private readonly repo: IConversationRepository,
     @inject(TYPES.AiGateway) private readonly ai: IAiGateway,
+    @inject(TYPES.DepartmentAccessService)
+    private readonly access: IDepartmentAccessService,
     @inject(TYPES.Logger) private readonly log: Logger,
   ) {}
 
@@ -105,12 +107,29 @@ export class ConversationService implements IConversationService {
       content: input.question,
     });
 
+    // 2b. Resolve the retrieval department scope from the caller's ROLE, never
+    //     from an unchecked client value:
+    //     - Admins are pinned to their own department (any hint is ignored).
+    //     - Employees may narrow to a specific department, but only one within
+    //       their allowed whitelist; an out-of-scope or absent hint leaves the
+    //       AI supervisor to route across the permitted knowledge bases.
+    const homeDept = this.access.getDepartmentForRole(input.userRole);
+    const allowed: readonly string[] = this.access.allowedDepartments(input.userRole);
+    let retrievalDepartment: string | null;
+    if (homeDept) {
+      retrievalDepartment = homeDept;
+    } else if (input.departmentHint && allowed.includes(input.departmentHint)) {
+      retrievalDepartment = input.departmentHint;
+    } else {
+      retrievalDepartment = null;
+    }
+
     // 3. Call AI service
     const aiResp = await this.ai.chat(
       {
         question: input.question,
         conversation_id: conv.aiConversationId ?? null,
-        department: input.departmentHint ?? null,
+        department: retrievalDepartment,
         top_k: input.topK ?? 5,
         min_score: input.minScore ?? 0.0,
         stream: false,
@@ -118,7 +137,7 @@ export class ConversationService implements IConversationService {
       {
         userId: input.userId,
         role: input.userRole,
-        department: input.userDepartment ?? null,
+        department: retrievalDepartment,
       },
     );
 

@@ -35,6 +35,14 @@ _ALWAYS_PRESENT = (
     "model",
     "dimensions",
     "indexed_at",
+    # Versioning — retrieval filters on is_latest to hide superseded versions.
+    "is_latest",
+    "version",
+    # Embedding/LLM provenance — keeps vectors traceable across model switches.
+    "embedding_provider",
+    "embedding_model",
+    "embedding_dimension",
+    "llm_provider",
 )
 
 
@@ -66,6 +74,15 @@ def build_chroma_metadata(ec: EmbeddedChunk, indexed_at: str = "") -> dict[str, 
         "indexed_at": indexed_at or datetime.utcnow().isoformat(),
         "source": str(raw.get("source", "")),
         "uploaded_by": str(raw.get("uploaded_by", "")),
+        # Versioning — bool/int kept native so ChromaDB can filter on them.
+        "is_latest": bool(raw.get("is_latest", True)),
+        "version": int(raw["version"]) if raw.get("version") is not None else 1,
+        # Embedding/LLM provenance (aliases of provider/model for clarity + future
+        # cross-provider filtering; safe defaults from the embedded chunk).
+        "embedding_provider": ec.provider,
+        "embedding_model": ec.model,
+        "embedding_dimension": ec.dimensions,
+        "llm_provider": str(raw.get("llm_provider", "")),
     }
 
     # Flatten any remaining metadata keys that aren't already present

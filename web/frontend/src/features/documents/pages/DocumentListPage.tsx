@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Permission } from '@optiagent/shared';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 // TODO: replace with useListDepartmentsQuery once departments feature is wired into this page
 import { useListDepartmentsQuery } from '@/features/departments/api/departmentsApi';
-import { useListDocumentsQuery, useDeleteDocumentMutation } from '../api/documentsApi';
+import {
+  useListDocumentsQuery,
+  useDeleteDocumentMutation,
+  useDownloadDocumentMutation,
+} from '../api/documentsApi';
 import { DocumentStatusBadge } from '../components/DocumentStatusBadge';
 import { UploadDocumentModal } from '../components/UploadDocumentModal';
+import { VersionHistoryModal } from '../components/VersionHistoryModal';
+import {
+  DocumentFilterBar,
+  EMPTY_FILTERS,
+  filtersToParams,
+  type DocumentFilters,
+} from '../components/DocumentFilterBar';
 
 function formatSize(bytes: number): string {
   const mb = bytes / 1024 / 1024;
@@ -18,14 +29,27 @@ export function DocumentListPage() {
   const { hasPermission } = useAuth();
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [filters, setFilters] = useState<DocumentFilters>(EMPTY_FILTERS);
+  const [versionsFor, setVersionsFor] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useListDocumentsQuery({ page, pageSize: 20 });
+  const queryParams = useMemo(
+    () => ({ page, pageSize: 20, ...filtersToParams(filters) }),
+    [page, filters],
+  );
+
+  const { data, isLoading, isError } = useListDocumentsQuery(queryParams);
   const [deleteDocument] = useDeleteDocumentMutation();
+  const [downloadDocument] = useDownloadDocumentMutation();
 
   // TODO: pass departments to UploadDocumentModal — using useListDepartmentsQuery
   const { data: departments = [] } = useListDepartmentsQuery();
 
   const totalPages = data ? Math.ceil(data.total / data.pageSize) : 0;
+
+  const applyFilters = (next: DocumentFilters) => {
+    setFilters(next);
+    setPage(1); // filtering resets to the first page
+  };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this document?')) return;
@@ -33,6 +57,22 @@ export function DocumentListPage() {
       await deleteDocument(id).unwrap();
     } catch {
       // Error is silently ignored; the cache will not update on failure
+    }
+  };
+
+  const handleDownload = async (id: string, filename: string) => {
+    try {
+      const blob = await downloadDocument(id).unwrap();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Download failed — leave the UI unchanged.
     }
   };
 
@@ -47,6 +87,12 @@ export function DocumentListPage() {
           <Button onClick={() => setUploadOpen(true)}>Upload document</Button>
         )}
       </div>
+
+      <DocumentFilterBar
+        value={filters}
+        onChange={applyFilters}
+        onReset={() => applyFilters(EMPTY_FILTERS)}
+      />
 
       {isLoading && (
         <p className="py-8 text-center text-sm text-slate-500">Loading documents…</p>
@@ -86,16 +132,34 @@ export function DocumentListPage() {
                     {new Date(doc.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {doc.status !== 'DELETED' && hasPermission(Permission.DOCUMENTS_MANAGE) && (
+                    <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => handleDelete(doc.id)}
+                        onClick={() => setVersionsFor(doc.id)}
                       >
-                        Delete
+                        Versions
                       </Button>
-                    )}
+                      {hasPermission(Permission.DOCUMENTS_VIEW) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(doc.id, doc.originalName)}
+                        >
+                          Download
+                        </Button>
+                      )}
+                      {doc.status !== 'DELETED' && hasPermission(Permission.DOCUMENTS_MANAGE) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleDelete(doc.id)}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -141,6 +205,11 @@ export function DocumentListPage() {
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         departments={departments}
+      />
+
+      <VersionHistoryModal
+        documentId={versionsFor}
+        onClose={() => setVersionsFor(null)}
       />
     </div>
   );

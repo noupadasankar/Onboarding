@@ -85,6 +85,7 @@ export class AnalyticsService implements IAnalyticsService {
 
     const withNames = await Promise.all(
       groups.map(async (g) => {
+        if (!g.departmentId) return { department: 'unassigned', count: g._count };
         const dept = await this.prisma.client.department.findUnique({
           where: { id: g.departmentId },
         });

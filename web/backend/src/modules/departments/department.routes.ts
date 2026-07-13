@@ -45,14 +45,14 @@ export function createDepartmentRoutes(
   router.post(
     '/',
     authorize(Permission.USERS_MANAGE),   // only managers can create departments
-    validate({ body: createBody }),
+    validate(createBody),
     ctrl.create,
   );
 
   router.patch(
     '/:id',
     authorize(Permission.USERS_MANAGE),
-    validate({ body: updateBody }),
+    validate(updateBody),
     ctrl.update,
   );
 

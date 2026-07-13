@@ -21,7 +21,7 @@ def create_llm_provider(provider_name: str | None = None) -> BaseLLMProvider:
 
     if name == "openai":
         from app.llm.providers.openai_provider import OpenAIProvider
-        return OpenAIProvider(api_key=s.openai_api_key, model=s.llm_model)
+        return OpenAIProvider(api_key=s.openai_api_key, model=s.llm_model, base_url=s.openai_base_url)
 
     if name == "anthropic":
         from app.llm.providers.anthropic_provider import AnthropicProvider

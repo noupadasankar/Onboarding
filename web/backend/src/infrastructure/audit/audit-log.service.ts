@@ -5,6 +5,7 @@
  */
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../core/di/types';
+import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../database/prisma.service';
 import type { Logger } from '../../core/logging/logger';
 
@@ -35,7 +36,7 @@ export class AuditLogService implements IAuditLogService {
           userId: entry.userId ?? null,
           action: entry.action,
           resource: entry.resource ?? null,
-          metadata: entry.metadata ?? undefined,
+          metadata: (entry.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
           ipAddress: entry.ipAddress ?? null,
           requestId: entry.requestId ?? null,
         },

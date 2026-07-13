@@ -29,7 +29,6 @@ from app.retrieval.prompt_builder import PromptBuilder
 from app.retrieval.query_processor import QueryProcessor
 from app.retrieval.reranker import BaseReranker, ScoreReranker
 from app.services.vector_service import VectorService
-from app.vectorstore.search_filters import SearchFilters
 
 _log = get_logger()
 
@@ -51,7 +50,14 @@ class RetrievalConfig:
     """Token budget for the assembled context."""
 
     department: str | None = None
-    """Optional metadata filter — restrict to a department."""
+    """Optional metadata filter — restrict to a single department."""
+
+    departments: list[str] | None = None
+    """Optional department whitelist — restrict to any of these departments.
+
+    Takes precedence over ``department``. Used for readers allowed to query
+    multiple knowledge bases (e.g. an employee may search HR + Finance + IT).
+    """
 
     document_id: str | None = None
     """Optional metadata filter — restrict to one document."""
@@ -172,19 +178,13 @@ class RetrievalService:
         query_vector = embedded[0].embedding
 
         # ── 3. Semantic search ────────────────────────────────────────────────
-        sf = SearchFilters()
-        if cfg.department:
-            sf.by_department(cfg.department)
-        if cfg.document_id:
-            sf.by_document(cfg.document_id)
-        if cfg.section:
-            sf.by_section(cfg.section)
-        where = sf.build()
-
+        # Department scoping + is_latest filtering are applied inside
+        # VectorService.search (single source of truth for the where-clause).
         raw_results: list[VectorSearchResult] = self._vs.search(
             query_embedding=query_vector,
             n_results=cfg.top_k_search,
             department=cfg.department,
+            departments=cfg.departments,
             document_id=cfg.document_id,
         )
         _log.info("retrieval_search_complete", raw_count=len(raw_results))
@@ -200,6 +200,7 @@ class RetrievalService:
                 query_text=query,
                 dense_results=raw_results,
                 department=cfg.department,
+                departments=cfg.departments,
                 n_results=cfg.top_k_search,
             )
             _log.info("retrieval_hybrid_complete", fused_count=len(raw_results))

@@ -24,6 +24,17 @@ import {
 
 import { AiGateway, type IAiGateway } from '../../infrastructure/ai/ai-gateway';
 
+import {
+  DepartmentAccessService,
+  type IDepartmentAccessService,
+} from '../auth/department-access.service';
+
+import { LocalStorageService } from '../../infrastructure/storage/local-storage.service';
+import type { IStorageService } from '../../infrastructure/storage/storage.service';
+
+import { InMemoryIndexingQueue } from '../../infrastructure/queue/in-memory-indexing-queue';
+import type { IIndexingQueue } from '../../infrastructure/queue/indexing-queue';
+
 import { bindAuthModule } from '../../modules/auth/auth.container';
 import { bindUsersModule } from '../../modules/users/user.container';
 import { bindRolesModule } from '../../modules/roles/roles.container';
@@ -63,6 +74,24 @@ export function buildContainer(config: AppConfig): Container {
 
   // --- AI Gateway ---
   container.bind<IAiGateway>(TYPES.AiGateway).to(AiGateway).inSingletonScope();
+
+  // --- Authorization policy (role → department) ---
+  container
+    .bind<IDepartmentAccessService>(TYPES.DepartmentAccessService)
+    .to(DepartmentAccessService)
+    .inSingletonScope();
+
+  // --- Storage (swap LocalStorageService for S3/Azure/MinIO here) ---
+  container
+    .bind<IStorageService>(TYPES.StorageService)
+    .to(LocalStorageService)
+    .inSingletonScope();
+
+  // --- Indexing queue (swap for Redis/BullMQ-backed impl to scale out) ---
+  container
+    .bind<IIndexingQueue>(TYPES.IndexingQueue)
+    .to(InMemoryIndexingQueue)
+    .inSingletonScope();
 
   // --- Feature modules ---
   bindUsersModule(container);

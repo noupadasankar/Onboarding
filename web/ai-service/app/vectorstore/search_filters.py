@@ -36,6 +36,31 @@ class SearchFilters:
         self._clauses.append({"department": {"$eq": department}})
         return self
 
+    def by_departments(self, departments: list[str]) -> "SearchFilters":
+        """Restrict to any of *departments* (whitelist, e.g. employee chat).
+
+        A single-element list collapses to an equality clause for efficiency.
+        An empty list is ignored (no clause added).
+        """
+        depts = [d for d in departments if d]
+        if not depts:
+            return self
+        if len(depts) == 1:
+            self._clauses.append({"department": {"$eq": depts[0]}})
+        else:
+            self._clauses.append({"department": {"$in": depts}})
+        return self
+
+    def only_latest(self) -> "SearchFilters":
+        """Exclude superseded versions.
+
+        Uses ``$ne: False`` rather than ``$eq: True`` so that legacy vectors
+        indexed before the is_latest field existed (where the key is absent)
+        remain retrievable — only vectors explicitly marked superseded are hidden.
+        """
+        self._clauses.append({"is_latest": {"$ne": False}})
+        return self
+
     def by_section(self, section: str) -> "SearchFilters":
         self._clauses.append({"section": {"$eq": section}})
         return self

@@ -45,7 +45,6 @@ export class ConversationController {
     const result = await this.svc.chat({
       userId: user.id,
       userRole: user.role,
-      userDepartment: null,
       conversationId: body.conversationId ?? null,
       question: body.question,
       departmentHint: body.departmentHint ?? null,

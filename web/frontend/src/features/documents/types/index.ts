@@ -1,4 +1,10 @@
-export type DocumentStatus = 'PENDING' | 'INDEXING' | 'INDEXED' | 'FAILED' | 'DELETED';
+export type DocumentStatus =
+  | 'PENDING'
+  | 'INDEXING'
+  | 'INDEXED'
+  | 'FAILED'
+  | 'SUPERSEDED'
+  | 'DELETED';
 
 export interface DocumentDTO {
   id: string;
@@ -9,10 +15,15 @@ export interface DocumentDTO {
   status: DocumentStatus;
   departmentId: string | null;
   department?: { name: string } | null;
+  departmentName?: string | null;
   uploadedById: string;
   chunkCount: number | null;
   vectorCount: number | null;
   errorMessage: string | null;
+  version: number;
+  isLatest: boolean;
+  parentDocumentId: string | null;
+  supersededAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,7 +31,15 @@ export interface DocumentDTO {
 export interface DocumentListParams {
   page?: number;
   pageSize?: number;
-  departmentId?: string;
+  // Department is NOT sent — the backend forces it from the caller's role.
+  status?: DocumentStatus;
+  filename?: string;
+  mimeType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  version?: number;
+  sizeMin?: number;
+  sizeMax?: number;
 }
 
 export interface DocumentPage {

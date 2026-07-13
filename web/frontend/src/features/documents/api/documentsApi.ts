@@ -39,6 +39,19 @@ export const documentsApi = baseApi.injectEndpoints({
         { type: 'Document', id },
       ],
     }),
+    getDocumentVersions: builder.query<DocumentPage['items'], string>({
+      query: (id) => `/documents/${id}/versions`,
+      transformResponse: (res: ApiResponse<{ items: DocumentDTO[] }>) => unwrap(res).items,
+      providesTags: (_result, _err, id) => [{ type: 'Document', id: `${id}:versions` }],
+    }),
+    // Download returns raw file bytes (not the JSON envelope), so bypass unwrap
+    // and read the response as a Blob for the browser to save.
+    downloadDocument: builder.mutation<Blob, string>({
+      query: (id) => ({
+        url: `/documents/${id}/download`,
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
   }),
 });
 
@@ -47,4 +60,6 @@ export const {
   useGetDocumentQuery,
   useUploadDocumentMutation,
   useDeleteDocumentMutation,
+  useGetDocumentVersionsQuery,
+  useDownloadDocumentMutation,
 } = documentsApi;

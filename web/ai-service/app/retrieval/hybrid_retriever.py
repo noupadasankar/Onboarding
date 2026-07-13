@@ -25,14 +25,15 @@ where *k* is the smoothing constant (default 60, standard in the literature).
 """
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
+
+from app.core.logging import get_logger
 
 if TYPE_CHECKING:
     from app.models.vector_document import VectorSearchResult
     from app.services.vector_service import VectorService
 
-_log = logging.getLogger(__name__)
+_log = get_logger()
 
 _RRF_K: int = 60  # standard smoothing constant for Reciprocal Rank Fusion
 
@@ -57,6 +58,7 @@ class HybridRetriever:
         query_text: str,
         dense_results: "list[VectorSearchResult]",
         department: "str | None" = None,
+        departments: "list[str] | None" = None,
         n_results: int = 20,
     ) -> "list[VectorSearchResult]":
         """Return a RRF-fused result list.
@@ -65,7 +67,9 @@ class HybridRetriever:
             query_text: Raw (normalised) user query for BM25 scoring.
             dense_results: Pre-computed dense search results (VectorSearchResult
                 list, highest similarity first).
-            department: Optional department scope for fetching the BM25 corpus.
+            department: Optional single-department scope for the BM25 corpus.
+            departments: Optional department whitelist for the BM25 corpus.
+                Takes precedence over *department*.
             n_results: Maximum number of results to return.
 
         Returns:
@@ -82,8 +86,8 @@ class HybridRetriever:
             )
             return dense_results[:n_results]
 
-        # ── 1. Fetch corpus ───────────────────────────────────────────────────
-        corpus = self._vs.get_all_text(department=department)
+        # ── 1. Fetch corpus (same scoping as dense search: dept + is_latest) ──
+        corpus = self._vs.get_all_text(department=department, departments=departments)
         if not corpus:
             _log.debug("hybrid_retriever: empty corpus, returning dense results")
             return dense_results[:n_results]

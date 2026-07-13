@@ -51,6 +51,18 @@ export interface DocumentListFilters {
   departmentId?: string;
   status?: DocumentStatus;
   uploadedById?: string;
+  /** Case-insensitive substring match on the original filename. */
+  filename?: string;
+  /** Inclusive lower/upper bounds on the upload date (ISO strings). */
+  dateFrom?: string;
+  dateTo?: string;
+  /** Exact version number. */
+  version?: number;
+  /** Exact MIME type. */
+  mimeType?: string;
+  /** Inclusive file-size bounds in bytes. */
+  sizeMin?: number;
+  sizeMax?: number;
 }
 
 export interface IDocumentRepository {
@@ -68,4 +80,9 @@ export interface IDocumentRepository {
   findLatestByNameAndDept(originalName: string, departmentId: string | null): Promise<DocumentDTO | null>;
   /** Mark a document as superseded: sets isLatest=false, status=SUPERSEDED, supersededAt=now. */
   markSuperseded(id: string): Promise<DocumentDTO | null>;
+  /**
+   * Return the full version chain for a document (all versions sharing the same
+   * root), newest first. Accepts any document id in the chain.
+   */
+  findVersions(id: string): Promise<DocumentDTO[]>;
 }

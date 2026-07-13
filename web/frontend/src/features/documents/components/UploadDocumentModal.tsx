@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUploadDocumentMutation } from '../api/documentsApi';
 
 interface Department {
@@ -14,17 +14,26 @@ interface Department {
 interface UploadDocumentModalProps {
   open: boolean;
   onClose: () => void;
-  departments: Department[];
+  /** Kept for API compatibility; department is now derived from the user's role. */
+  departments?: Department[];
 }
 
-export function UploadDocumentModal({ open, onClose, departments }: UploadDocumentModalProps) {
+/** Human-readable department a role uploads into (mirrors backend role→dept map). */
+const ROLE_DEPARTMENT_LABEL: Record<string, string> = {
+  HR_MANAGER: 'HR',
+  FINANCE_ADMIN: 'Finance',
+  IT_ADMIN: 'IT',
+};
+
+export function UploadDocumentModal({ open, onClose }: UploadDocumentModalProps) {
+  const { user } = useAuth();
   const [uploadDocument, { isLoading }] = useUploadDocumentMutation();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const departmentLabel = user ? ROLE_DEPARTMENT_LABEL[user.role] ?? '—' : '—';
+
   const handleClose = () => {
-    setDepartmentId('');
     setError(null);
     if (fileRef.current) fileRef.current.value = '';
     onClose();
@@ -40,11 +49,9 @@ export function UploadDocumentModal({ open, onClose, departments }: UploadDocume
       return;
     }
 
+    // Department is assigned server-side from the caller's role — not sent here.
     const formData = new FormData();
     formData.append('file', file);
-    if (departmentId) {
-      formData.append('departmentId', departmentId);
-    }
 
     try {
       await uploadDocument(formData).unwrap();
@@ -72,19 +79,13 @@ export function UploadDocumentModal({ open, onClose, departments }: UploadDocume
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="departmentId">Department (optional)</Label>
-          <Select
-            id="departmentId"
-            value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value)}
-          >
-            <option value="">No department</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.displayName}
-              </option>
-            ))}
-          </Select>
+          <Label>Department</Label>
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            {departmentLabel}
+          </div>
+          <p className="text-xs text-slate-500">
+            Documents are filed under your department automatically.
+          </p>
         </div>
 
         {error && (

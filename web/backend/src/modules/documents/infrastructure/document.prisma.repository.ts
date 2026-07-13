@@ -54,15 +54,40 @@ export class DocumentPrismaRepository implements IDocumentRepository {
   private include = { department: { select: { name: true } } } as const;
 
   async findAll(page: number, pageSize: number, filters?: DocumentListFilters) {
+    // Optional inclusive createdAt range.
+    const createdAt =
+      filters?.dateFrom || filters?.dateTo
+        ? {
+            ...(filters?.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+            ...(filters?.dateTo ? { lte: new Date(filters.dateTo) } : {}),
+          }
+        : undefined;
+
+    // Optional inclusive size range.
+    const sizeBytes =
+      filters?.sizeMin != null || filters?.sizeMax != null
+        ? {
+            ...(filters?.sizeMin != null ? { gte: filters.sizeMin } : {}),
+            ...(filters?.sizeMax != null ? { lte: filters.sizeMax } : {}),
+          }
+        : undefined;
+
     const where = {
       // When no explicit status is requested, hide superseded and deleted docs
       // (show only the latest active version of each document).
       status: filters?.status
         ? filters.status
-        : { notIn: ['DELETED', 'SUPERSEDED'] as const },
+        : { notIn: ['DELETED', 'SUPERSEDED'] as ('DELETED' | 'SUPERSEDED')[] },
       isLatest: filters?.status ? undefined : true,
       ...(filters?.departmentId ? { departmentId: filters.departmentId } : {}),
       ...(filters?.uploadedById ? { uploadedById: filters.uploadedById } : {}),
+      ...(filters?.filename
+        ? { originalName: { contains: filters.filename, mode: 'insensitive' as const } }
+        : {}),
+      ...(filters?.version != null ? { version: filters.version } : {}),
+      ...(filters?.mimeType ? { mimeType: filters.mimeType } : {}),
+      ...(createdAt ? { createdAt } : {}),
+      ...(sizeBytes ? { sizeBytes } : {}),
     };
 
     const [total, rows] = await Promise.all([
@@ -76,7 +101,7 @@ export class DocumentPrismaRepository implements IDocumentRepository {
       }),
     ]);
 
-    return { items: rows.map(this.map), total, page, pageSize };
+    return { items: rows.map((r) => this.map(r)), total, page, pageSize };
   }
 
   async findById(id: string): Promise<DocumentDTO | null> {
@@ -165,5 +190,26 @@ export class DocumentPrismaRepository implements IDocumentRepository {
     } catch {
       return null;
     }
+  }
+
+  async findVersions(id: string): Promise<DocumentDTO[]> {
+    const doc = await this.prisma.client.document.findUnique({
+      where: { id },
+      select: { id: true, parentDocumentId: true },
+    });
+    if (!doc) return [];
+
+    // The root of a version chain is v1: its own id when it has no parent, or the
+    // parentDocumentId that every later version points back to.
+    const rootId = doc.parentDocumentId ?? doc.id;
+
+    const rows = await this.prisma.client.document.findMany({
+      where: {
+        OR: [{ id: rootId }, { parentDocumentId: rootId }],
+      },
+      include: this.include,
+      orderBy: { version: 'desc' },
+    });
+    return rows.map((r) => this.map(r));
   }
 }

@@ -3,6 +3,7 @@
  */
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../../core/di/types';
+import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../../infrastructure/database/prisma.service';
 import type {
   CreateNotificationInput,
@@ -65,7 +66,7 @@ export class NotificationPrismaRepository implements INotificationRepository {
         type: input.type,
         title: input.title,
         body: input.body,
-        metadata: input.metadata ?? undefined,
+        metadata: (input.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
       },
     });
     return toDTO(n);

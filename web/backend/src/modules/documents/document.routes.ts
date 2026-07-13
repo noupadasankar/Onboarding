@@ -23,8 +23,10 @@ export function createDocumentRoutes(
 
   router.use(authenticate);
 
-  router.get('/', ctrl.list);
-  router.get('/:id', ctrl.getById);
+  router.get('/', authorize(Permission.DOCUMENTS_VIEW), ctrl.list);
+  router.get('/:id', authorize(Permission.DOCUMENTS_VIEW), ctrl.getById);
+  router.get('/:id/versions', authorize(Permission.DOCUMENTS_VIEW), ctrl.getVersions);
+  router.get('/:id/download', authorize(Permission.DOCUMENTS_VIEW), ctrl.download);
   router.post(
     '/upload',
     authorize(Permission.DOCUMENTS_UPLOAD),

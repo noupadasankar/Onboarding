@@ -109,23 +109,30 @@ class VectorService:
         n_results: int = 5,
         department: str | None = None,
         document_id: str | None = None,
+        departments: list[str] | None = None,
     ) -> list[VectorSearchResult]:
         """Semantic nearest-neighbour search.
 
         Args:
             query_embedding: Embedded query vector.
             n_results: Maximum results.
-            department: Optional metadata filter.
+            department: Optional single-department metadata filter.
             document_id: Optional restrict to a single document.
+            departments: Optional department whitelist (e.g. employee chat may
+                read HR + Finance + IT). Takes precedence over *department*.
 
         Returns:
             Ordered list of VectorSearchResult (highest similarity first).
         """
         sf = SearchFilters()
-        if department:
+        if departments:
+            sf.by_departments(departments)
+        elif department:
             sf.by_department(department)
         if document_id:
             sf.by_document(document_id)
+        # Never retrieve superseded versions.
+        sf.only_latest()
         where = sf.build()
         return self._repo.search(query_embedding, n_results=n_results, where=where)
 
@@ -154,18 +161,28 @@ class VectorService:
     def get_all_text(
         self,
         department: "str | None" = None,
+        departments: "list[str] | None" = None,
     ) -> "list[dict]":
         """Return all chunk texts and metadata for BM25 index construction.
 
+        Must apply the SAME scoping as :meth:`search` — otherwise BM25 could
+        resurface superseded or out-of-department chunks that the dense filter
+        excluded.
+
         Args:
-            department: Optional department filter to scope the corpus.
+            department: Optional single-department filter to scope the corpus.
+            departments: Optional department whitelist. Takes precedence.
 
         Returns:
             List of dicts with keys: chunk_id, text, document_id, metadata.
         """
         sf = SearchFilters()
-        if department:
+        if departments:
+            sf.by_departments(departments)
+        elif department:
             sf.by_department(department)
+        # Keep BM25 corpus consistent with dense search: latest versions only.
+        sf.only_latest()
         where = sf.build()
         return self._repo.get_all_text(where=where)
 

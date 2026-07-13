@@ -78,4 +78,15 @@ class MetadataBuilder:
             # HR-specific context (may be absent on non-HR docs)
             "department": doc_meta.get("department"),
             "category": doc_meta.get("category"),
+            # Versioning — defaults keep legacy/re-processed docs retrievable.
+            "is_latest": doc_meta.get("is_latest", True),
+            "version": doc_meta.get("version", 1),
+            # Provenance (traceability + future metadata filtering)
+            "department_id": doc_meta.get("department_id", ""),
+            "document_uuid": doc_meta.get("document_uuid", doc.document_id),
+            "uploaded_by": doc_meta.get("uploaded_by", ""),
+            "uploaded_at": doc_meta.get("uploaded_at", ""),
+            "document_status": doc_meta.get("document_status", ""),
+            "mime_type": doc_meta.get("mime_type", ""),
+            "storage_path": doc_meta.get("storage_path", ""),
         }

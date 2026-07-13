@@ -58,7 +58,7 @@ class DocxLoader(BaseLoader):
         headings = [
             p.text.strip()
             for p in doc.paragraphs
-            if p.style.name.startswith("Heading") and p.text.strip()
+            if p.style and p.style.name and p.style.name.startswith("Heading") and p.text.strip()
         ]
 
         raw_meta: dict[str, Any] = {

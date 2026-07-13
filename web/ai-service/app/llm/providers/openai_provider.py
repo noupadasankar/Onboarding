@@ -24,7 +24,7 @@ _MAX_DELAY = 30.0
 
 
 class OpenAIProvider(BaseLLMProvider):
-    def __init__(self, api_key: str, model: str = "gpt-4.1") -> None:
+    def __init__(self, api_key: str, model: str = "gpt-4.1", base_url: str = "") -> None:
         if not api_key:
             raise ValueError("OPENAI_API_KEY is not set")
         try:
@@ -33,7 +33,7 @@ class OpenAIProvider(BaseLLMProvider):
         except ImportError as exc:
             raise ImportError("pip install openai") from exc
 
-        self._client = AsyncOpenAI(api_key=api_key)
+        self._client = AsyncOpenAI(api_key=api_key, base_url=base_url or None)
         self._model = model
         self._AuthenticationError = AuthenticationError
         self._BadRequestError = BadRequestError

@@ -34,7 +34,7 @@ export function createAdminSettingsRoutes(
 
   router.get('/', ctrl.listAll);
   router.get('/:key', ctrl.getOne);
-  router.put('/:key', validate({ body: upsertBody }), ctrl.upsert);
+  router.put('/:key', validate(upsertBody), ctrl.upsert);
   router.delete('/:key', ctrl.remove);
 
   return router;
