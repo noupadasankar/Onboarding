@@ -1,213 +1,181 @@
-# OptiAgent
+# HR Onboarding AI Employee 🤖
 
-> Deloitte Technology Consulting Capstone 2026
+> **Deloitte Technology Consulting Capstone 2026**  
+> *An autonomous, governance-aware HR Onboarding Conversational Assistant with multi-turn task tracking, grounded policy Q&A, and citation inspection.*
 
-## Overview
+---
 
-OptiAgent is an enterprise AI platform that embeds trustworthy, governance-aware AI agents
-into core business operations across HR, Finance, and IT. It is designed for large
-organizations that need to augment knowledge-worker workflows with LLM-powered automation
-while maintaining strict access control, full audit trails, and explainable decision paths.
+## 📌 Scenario & Evaluation Rubric
 
-The platform is built as a production-grade monorepo with three independently deployable
-services: a React frontend, a Node.js API gateway, and a Python AI service. Role-based
-access control is enforced at the gateway layer before any AI call is made, and every
-agent action is attributable to an authenticated user.
+| Scenario | Build a conversational agent that walks a new hire through onboarding questions — benefits, IT setup, policies — using provided FAQ and policy documents, and can create and track simple onboarding tasks. |
+| :--- | :--- |
+| **Groundedness & Accuracy** | Answers strictly derived from uploaded policy & FAQ documents with source citations. |
+| **Task-Tracking Correctness** | Creates, stores, retrieves, and completes onboarding tasks across multi-turn dialogue. |
+| **Conversational Design** | Warm, professional, clean markdown formatting with interactive dual-pane UI. |
 
-## Architecture
+---
+
+## 🌟 Key Features
+
+1. **Dual-Pane Onboarding Hub**:
+   - **Left Pane**: Conversational AI assistant with real-time streaming, suggested quick question chips, markdown rendering, and clickable source citation badges.
+   - **Right Pane**: Interactive Onboarding Checklist with animated visual progress bar (`% Complete`), category filters (`HR`, `IT`, `Finance`, `Compliance`, `General`), one-click completion checkboxes, and task management modals.
+
+2. **Grounded Multi-Document RAG**:
+   - Auto-bootstrapped vector store indexing all 8 enterprise policy documents on startup (`Onboarding_Process.txt`, `HR_FAQs.csv`, `Leave_Policy.docx`, `Company_Policy.docx`, `IT_FAQs.csv`, `IT_Policy.docx`, `Expense_Guidelines.txt`, `Finance_FAQs.csv`).
+   - Semantic chunking with local sentence embeddings (`all-MiniLM-L6-v2`) and ultra-fast LLM completion via Groq.
+
+3. **Conversational Task Actions (Multi-Turn Memory)**:
+   - *"Show my onboarding tasks"* → Lists active tasks grouped by status (Pending, In Progress, Completed).
+   - *"Create a task for benefits enrollment by next Friday"* → Extracts title, category, priority, and due date from dialogue.
+   - *"Mark 1Password & MFA as completed"* → Fuzzy title matching with instant status & progress update.
+
+4. **Source Document Citation Inspector**:
+   - Every answer cites the source document and section.
+   - Clicking on any citation opens an excerpt modal showing the exact text chunk and match score.
+
+---
+
+## 🏗️ System Architecture
 
 ```
-Browser (React SPA)
-        │
-        ▼
-   Nginx Gateway (:80)
-   ├── /           → React static files
-   └── /api/       → Node.js Backend (:8000)
-                           │
-                ┌──────────┴──────────┐
-                │                     │
-          PostgreSQL              Redis
-          (Prisma ORM)        (token store + cache)
-                │
-                └──── FastAPI AI Service (:8100)    ← internal only, never browser-accessible
-                              │
-                    ┌─────────┴──────────┐
-                    │                    │
-                ChromaDB            OpenAI / Anthropic
-              (vector store)          (LLM provider)
+                               ┌───────────────────────────┐
+                               │  React 19 Frontend (:3000)│
+                               │   Dual-Pane Onboarding    │
+                               └─────────────┬─────────────┘
+                                             │ HTTP / REST
+                                             ▼
+                               ┌───────────────────────────┐
+                               │  Node.js Gateway (:8000)  │
+                               │  Inversify DI · Auth RBAC │
+                               │  PostgreSQL · Redis Store │
+                               └─────────────┬─────────────┘
+                                             │ Internal Token Forwarding
+                                             ▼
+                               ┌───────────────────────────┐
+                               │  FastAPI AI Service(:8100)│
+                               │  LangGraph Supervisor     │
+                               │  HR Onboarding Agent Node │
+                               └─────────────┬─────────────┘
+                                             │
+                      ┌──────────────────────┴──────────────────────┐
+                      ▼                                             ▼
+          ┌────────────────────────┐                   ┌────────────────────────┐
+          │ ChromaDB Vector Store  │                   │  Groq / LLaMA / OpenAI │
+          │ 375 Indexed Chunks     │                   │  Low-Latency LLM       │
+          └────────────────────────┘                   └────────────────────────┘
 ```
 
-The Node backend authenticates every request before forwarding it to the AI service. The
-Python service never authenticates end users; it trusts the gateway via an internal shared
-secret. This keeps AI-specific code entirely separate from auth logic.
+---
 
-Database ownership is split by service:
-
-- **Node backend** owns `users`, `roles`, `permissions`, `audit_logs`, and all relational
-  business data — managed via **Prisma** migrations in `backend/prisma/`.
-- **Python AI service** owns vector embeddings, prompt templates, and conversation memory
-  — stored in **ChromaDB** and Postgres tables managed via **Alembic** in
-  `ai-service/alembic/`.
-
-Both Postgres schemas live in the same Postgres 16 instance but are independently
-versioned.
-
-## Services
-
-| Directory | Package / Image | Role |
-|---|---|---|
-| `frontend/` | `@optiagent/frontend` | React 19 + Vite + Redux Toolkit + RTK Query + Tailwind + shadcn/ui. Renders the agent dashboard and all CRUD surfaces. |
-| `backend/` | `@optiagent/backend` | Node 20 + Express + TypeScript + InversifyJS + Prisma. Auth, RBAC, REST/WebSocket gateway. Swagger docs at `/docs`. |
-| `ai-service/` | `optiagent-ai` | Python 3.11 + FastAPI + LangGraph + LangChain. Agent orchestration, RAG, embeddings. Receives forwarded user context from the gateway. |
-| `shared/` | `@optiagent/shared` | Pure TypeScript library. DTOs, Zod schemas, Role/Permission enums, API envelope types. Consumed by both frontend and backend at compile time. |
-
-## Quick Start
+## 🚀 Quick Start Guide
 
 ### Prerequisites
-
-- Node.js 20+ · pnpm 8+
+- Node.js 20+ & `pnpm` 8+
 - Python 3.11
-- Docker Desktop
+- PostgreSQL (`localhost:5432`) & Redis (`localhost:6379`)
 
-### 1. Start infrastructure
-
+### 1. Install Dependencies
 ```bash
-cp .env.example .env
-# Fill in OPENAI_API_KEY and set a strong INTERNAL_SERVICE_TOKEN
-
-docker compose -f docker/docker-compose.yml up -d postgres redis chromadb
-```
-
-### 2. Node backend
-
-```bash
-cd web/backend
-cp .env.example .env   # already configured for local Docker infra
-
-# First run only: generate RS256 keypair
-node scripts/generate-keys.mjs
-
 pnpm install
-pnpm prisma:migrate dev   # create schema + run migrations
-pnpm prisma:seed
-pnpm prisma:migrate dev
-          # insert demo users, roles, departments
-pnpm dev                  # http://localhost:8000  ·  Swagger: /api/docs
+cd web/ai-service && pip install -e ".[dev]"
 ```
 
-### 3. AI service
+### 2. Configure Environment Variables
+- `web/ai-service/.env`:
+  ```env
+  APP_ENV=development
+  APP_PORT=8100
+  INTERNAL_SERVICE_TOKEN=change-me-internal-service-token
+  CHROMA_MODE=memory
+  LLM_PROVIDER=openai
+  LLM_MODEL=openai/gpt-oss-120b
+  OPENAI_API_KEY=your_groq_api_key_here
+  OPENAI_BASE_URL=https://api.groq.com/openai/v1
+  ```
+- `web/backend/.env`:
+  ```env
+  DATABASE_URL=postgresql://postgres:postgres@localhost:5432/optiagent?schema=public
+  REDIS_URL=redis://localhost:6379/0
+  AI_SERVICE_URL=http://localhost:8100
+  INTERNAL_SERVICE_TOKEN=change-me-internal-service-token
+  ```
 
+### 3. Run the Services
+
+You can start all three services simultaneously or in separate terminal tabs:
+
+#### Tab 1 — AI Service (:8100)
 ```bash
 cd web/ai-service
-cp .env.example .env   # add your OPENAI_API_KEY here
-pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8100
+python -m uvicorn app.main:app --port 8100
 ```
 
-### 4. Frontend
+#### Tab 2 — Backend API (:8000)
+```bash
+pnpm --filter @hr-onboarding/backend dev
+```
+
+#### Tab 3 — Frontend UI (:3000)
+```bash
+pnpm --filter @hr-onboarding/frontend dev
+```
+
+---
+
+## 🔑 Demo Login Accounts
+
+All accounts use the password: **`Password123!`**
+
+| Email | Role | Access / Permissions |
+| :--- | :--- | :--- |
+| `employee@optiagent.dev` | **EMPLOYEE** (New Hire) | Onboarding Q&A, Personal Checklist, General Policies |
+| `hr.manager@optiagent.dev` | **HR_MANAGER** | Full HR Knowledge Base & Employee Onboarding Overview |
+| `it.admin@optiagent.dev` | **IT_ADMIN** | IT Provisioning, Device Policies, User Management |
+| `finance.admin@optiagent.dev` | **FINANCE_ADMIN** | Payroll, Direct Deposit, Expense Guidelines |
+
+---
+
+## 🧪 Testing & Verification
+
+Run automated test suites across the repository:
 
 ```bash
-cd web/frontend
-pnpm install
-pnpm dev   # http://localhost:5173
+# Run all unit and integration tests (45 tests)
+pnpm --filter @hr-onboarding/backend test
+
+# Run global TypeScript typecheck (0 errors)
+pnpm typecheck
 ```
 
-### Demo accounts (password: `Password123!`)
+---
 
-| Email | Role |
-|---|---|
-| `employee@optiagent.dev` | EMPLOYEE |
-| `hr.manager@optiagent.dev` | HR_MANAGER |
-| `finance.admin@optiagent.dev` | FINANCE_ADMIN |
-| `it.admin@optiagent.dev` | IT_ADMIN |
-
-### Full Docker stack (production-like)
-
-```bash
-docker compose -f docker/docker-compose.yml --profile full up --build
-# Open http://localhost
-```
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 .
-├── frontend/           React 19 SPA — agent dashboard and admin UI
-├── backend/            Node.js API gateway — auth, RBAC, CRUD, WebSocket
-│   └── prisma/         Prisma schema + migrations + seed script
-├── ai-service/         Python AI service — LangGraph agents, RAG, embeddings
-│   └── alembic/        Alembic migrations for AI-service-owned tables
-├── shared/             @optiagent/shared — cross-service contracts
-│   └── src/
-│       ├── auth/       DTOs, Zod schemas, Role/Permission constants
-│       ├── common/     ApiResponse envelope, Paginated<T>, pagination schema
-│       └── errors/     ErrorCode enum
-├── docker/             docker-compose.yml, NGINX config, Postgres init
-│   ├── nginx/          nginx.conf + frontend.conf
-│   └── postgres/       init.sql (extensions + database creation)
-└── docs/               Architecture writeups, ADRs, sequence diagrams
-    └── architecture/
+├── web/
+│   ├── frontend/                # React 19 SPA with dual-pane Onboarding Hub
+│   │   └── src/features/onboarding/
+│   │       ├── api/             # RTK Query client (chat, tasks, overview)
+│   │       ├── components/      # ChatMessage, TaskList, TaskFormModal
+│   │       └── pages/           # OnboardingChatPage.tsx
+│   ├── backend/                 # Node.js Express API & Inversify DI Gateway
+│   │   └── src/modules/onboarding/
+│   │       ├── application/     # Controller, Service, Routes
+│   │       ├── domain/          # OnboardingTask entity & interfaces
+│   │       └── infrastructure/  # In-memory repository with default seed tasks
+│   └── ai-service/              # Python FastAPI LangGraph AI service
+│       └── app/
+│           ├── agents/          # Onboarding agent with RAG & TaskTool
+│           ├── rag/             # Chunking, embeddings & vector retrieval
+│           └── tools/           # TaskTool with fuzzy status matching
+├── shared/                      # Pure TypeScript cross-service contracts
+└── data/raw/                    # HR/IT/Finance policy documents and FAQs
 ```
 
-## CI/CD
+---
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` / `develop`:
+## 📄 License
+UNLICENSED — Deloitte Capstone 2026 Internal Submission.
 
-1. **Shared** — typecheck + build the shared package artifact
-2. **Backend** — typecheck, tests against real Postgres + Redis services
-3. **Frontend** — typecheck, Vitest component tests, Vite build
-4. **AI Service** — ruff lint, mypy type-check, pytest
-5. **Docker build** — build all three images (on `main` only, with layer caching)
-
-## Testing
-
-```bash
-# Backend (Vitest + supertest)
-pnpm --filter @optiagent/backend test
-
-# Frontend (Vitest + React Testing Library)
-pnpm --filter @optiagent/frontend test
-
-# AI service (pytest)
-cd web/ai-service && pytest
-```
-
-## Documentation
-
-Architecture writeups, Architecture Decision Records (ADRs), and sequence diagrams live in
-[`docs/`](docs/). Start with:
-
-- [`docs/architecture/00-overview.md`](docs/architecture/00-overview.md) — system-wide
-  architecture narrative
-- [`docs/architecture/01-auth-vertical-slice.md`](docs/architecture/01-auth-vertical-slice.md) —
-  the authentication increment as the canonical pattern for all future increments
-
-## Build Status
-
-| Phase | Status | Description |
-|---|---|---|
-| Phase 1 — AI Service | ✅ Complete | FastAPI · LangGraph supervisor · HR/Finance/IT agents · RAG · ChromaDB |
-| Phase 2 — Node Backend | ✅ Complete | Auth · RBAC · Users · Departments · Documents · Chat · Dashboard · Analytics · Notifications · Admin |
-| Phase 3 — React Frontend | ✅ Complete | Login · Layout · Dashboard · Chat · Documents · Departments · Analytics · Notifications · Profile · Admin |
-| Phase 4 — Integration | ✅ Complete | Docker Compose · Nginx gateway · Environment wiring |
-| Phase 5 — Production | ✅ Complete | GitHub Actions CI/CD · Health checks · Structured logging · Prisma migrations |
-| Phase 6 — Demo Prep | ✅ Complete | 7 sample documents (HR/Finance/IT) · 4 sequence diagrams · Demo guide · Presentation outline |
-
-## AI Service Increments
-
-| # | Name | Description |
-|---|---|---|
-| 1 | FastAPI Foundation | Project scaffold, internal auth, health endpoint |
-| 2 | Internal Auth | HMAC token guard on all AI endpoints |
-| 3 | Document Ingestion | File upload, text extraction, document model |
-| 4 | Chunking | Semantic chunking pipeline with metadata |
-| 5 | Embeddings | OpenAI/Voyage provider abstraction, batch embedding |
-| 6 | ChromaDB | Vector store integration, collection manager |
-| 7 | Retrieval | Semantic search, reranker, context builder, prompt builder |
-| 8 | RAG Chat | LLM provider abstraction, citation builder, conversation store |
-| 9 | LangGraph Supervisor | Stateful multi-agent graph, routing logic |
-| 10 | Multi-Agent Platform | Finance/IT/Governance agents, parallel workflows, eval framework |
-
-## License
-
-UNLICENSED — Deloitte Capstone 2026 internal project.
