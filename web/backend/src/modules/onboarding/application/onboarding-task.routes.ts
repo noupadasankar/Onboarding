@@ -1,19 +1,26 @@
 /** Onboarding Task routes. */
-import { Router, type RequestHandler } from 'express';
+import { Router } from 'express';
 import type { Container } from 'inversify';
-import type { IAuthenticate } from '../../../middleware/authenticate.middleware';
+import type { AuthMiddleware } from '../../../middleware/authenticate.middleware';
 import { TYPES } from '../../../core/di/types';
+import type { OnboardingTaskController } from './onboarding-task.controller';
 
 export function createOnboardingRoutes(
   container: Container,
-  authenticate: IAuthenticate
+  authenticate: AuthMiddleware,
 ): Router {
   const router = Router();
   const controller = container.get<OnboardingTaskController>(TYPES.OnboardingTaskController);
 
-  // All routes require authentication
-  router.use(authenticate as RequestHandler);
+  router.use(authenticate);
 
+  // Chat endpoint
+  router.post('/chat', controller.chat);
+
+  // Overview endpoint
+  router.get('/overview', controller.getOverview);
+
+  // Task CRUD endpoints
   router.post('/tasks', controller.createTask);
   router.get('/tasks', controller.getTasks);
   router.get('/tasks/:taskId', controller.getTask);
@@ -24,5 +31,3 @@ export function createOnboardingRoutes(
   return router;
 }
 
-// Type for the controller (will be registered in container)
-import type { OnboardingTaskController } from '../application/onboarding-task.controller';

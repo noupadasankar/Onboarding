@@ -1,8 +1,18 @@
-/** Onboarding Task service. */
-import type { OnboardingTask, CreateTaskInput, UpdateTaskInput, OnboardingTaskRepository } from '../domain/onboarding-task.entity';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../../core/di/types';
+import type {
+  OnboardingTask,
+  CreateTaskInput,
+  UpdateTaskInput,
+  OnboardingOverview,
+  OnboardingTaskRepository,
+} from '../domain/onboarding-task.entity';
 
+@injectable()
 export class OnboardingTaskService {
-  constructor(private readonly repo: OnboardingTaskRepository) {}
+  constructor(
+    @inject(TYPES.OnboardingTaskRepository) private readonly repo: OnboardingTaskRepository,
+  ) {}
 
   async createTask(input: CreateTaskInput): Promise<OnboardingTask> {
     return this.repo.create(input);
@@ -10,6 +20,23 @@ export class OnboardingTaskService {
 
   async getTasks(userId: string): Promise<OnboardingTask[]> {
     return this.repo.findByUserId(userId);
+  }
+
+  async getOverview(userId: string): Promise<OnboardingOverview> {
+    const tasks = await this.repo.findByUserId(userId);
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.status === 'completed').length;
+    const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
+    const pending = tasks.filter((t) => t.status === 'pending').length;
+    const progressPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return {
+      totalTasks: total,
+      completedTasks: completed,
+      inProgressTasks: inProgress,
+      pendingTasks: pending,
+      progressPercentage,
+    };
   }
 
   async getTask(taskId: string): Promise<OnboardingTask | null> {
@@ -28,3 +55,4 @@ export class OnboardingTaskService {
     return this.repo.update(taskId, { status: 'completed' });
   }
 }
+

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Role } from '@optiagent/shared';
+import { Role } from '@hr-onboarding/shared';
 import { AuthService } from '../../src/modules/auth/application/auth.service';
 import { UserEntity } from '../../src/modules/users/domain/user.entity';
 import { AppError } from '../../src/core/errors/app-error';

@@ -9,7 +9,7 @@ import {
   ALL_ROLES,
   permissionsForRole,
   Role,
-} from '@optiagent/shared';
+} from '@hr-onboarding/shared';
 
 const prisma = new PrismaClient();
 

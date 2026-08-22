@@ -46,7 +46,7 @@ import { analyticsModule } from '../../modules/analytics/analytics.container';
 import { auditLogsModule } from '../../modules/audit-logs/audit-logs.container';
 import { notificationModule } from '../../modules/notifications/notification.container';
 import { adminSettingsModule } from '../../modules/admin-settings/admin-settings.container';
-import { registerOnboardingBindings } from '../../modules/onboarding/application/onboarding.container';
+import { onboardingModule } from '../../modules/onboarding/application/onboarding.container';
 
 export function buildContainer(config: AppConfig): Container {
   const container = new Container({ defaultScope: 'Singleton' });
@@ -106,7 +106,7 @@ export function buildContainer(config: AppConfig): Container {
   container.load(auditLogsModule);
   container.load(notificationModule);
   container.load(adminSettingsModule);
-  registerOnboardingBindings(container);
+  container.load(onboardingModule);
 
   return container;
 }

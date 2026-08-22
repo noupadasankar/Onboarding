@@ -30,7 +30,7 @@ describe('Auth + RBAC routes (integration)', () => {
   });
 
   it('rejects invalid credentials with 401', async () => {
-    const res = await login('hr.manager@optiagent.dev', 'nope');
+    const res = await login('hr.manager@optiagent.dev', 'WrongPassword123!');
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
   });

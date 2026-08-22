@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     chroma_tenant: str = Field(default="default_tenant")
     chroma_database: str = Field(default="default_database")
     # "http" uses the HTTP client (remote server); "memory" uses ephemeral in-process client (tests/dev)
-    chroma_mode: str = Field(default="http")
+    chroma_mode: str = Field(default="memory")
 
     # ── LLM providers ─────────────────────────────────────────────────────────
     anthropic_api_key: str = Field(default="")
@@ -52,8 +52,8 @@ class Settings(BaseSettings):
     # Optional: override the OpenAI API base URL (e.g. https://api.groq.com/openai/v1 for Groq)
     openai_base_url: str = Field(default="")
     # Provider: openai | anthropic | local (default local — no API key required)
-    llm_provider: str = Field(default="local")
-    llm_model: str = Field(default="gpt-4.1")
+    llm_provider: str = Field(default="openai")
+    llm_model: str = Field(default="openai/gpt-oss-120b")
     llm_temperature: float = Field(default=0.0)
     llm_max_tokens: int = Field(default=1024)
     llm_timeout: int = Field(default=60)

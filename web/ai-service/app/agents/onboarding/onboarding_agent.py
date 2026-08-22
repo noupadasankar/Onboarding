@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -13,51 +14,23 @@ from app.retrieval.retrieval_service import RetrievalService, RetrievalConfig
 from app.retrieval.retrieval_pipeline import RetrievalPipeline
 from app.retrieval.prompt_builder import PromptBuilder
 from app.tools.retrieval_tool import RetrievalTool
-from app.tools.task_tool import TaskTool, TaskOperation
+from app.tools.task_tool import TaskTool, TaskOperation, TaskStatus, TaskPriority
 
 _log = get_logger()
 
-ONBOARDING_SYSTEM_PROMPT = """You are the HR Onboarding AI Employee — a conversational agent that helps new hires navigate their onboarding journey.
+ONBOARDING_SYSTEM_PROMPT = """You are the HR Onboarding AI Employee — a warm, professional, and knowledgeable onboarding guide for new employees.
 
-Your role:
-- Answer onboarding questions grounded ONLY in the provided HR documents (onboarding process, FAQs, policies, handbook)
-- Create and track onboarding tasks for new hires
-- Allow users to check task status conversationally
-- Handle multi-turn conversations naturally (e.g., ask clarifying questions, remember context)
+Your responsibilities:
+1. Answer onboarding questions grounded strictly in the provided HR, IT, and company policy documents.
+2. Help new hires track, manage, and complete their onboarding tasks.
+3. Guide new hires through their Day 1, Week 1, and 30/60/90-day journey.
 
-Rules:
-- Answer ONLY from the provided context. Never invent or assume HR policies.
-- If the answer is not found in the context, respond with: "I couldn't find that information in the uploaded HR documents."
-- When quoting a policy, cite the source document and section.
-- Keep answers concise, clear, and well-structured.
-- Always use professional, warm, and welcoming language appropriate for new hires.
-- For task creation: extract task details from the conversation and confirm with the user before creating.
-- For task status: retrieve and present the current status of user's tasks.
-- Maintain conversation context across turns — remember what the user has asked and what tasks they've created.
-
-Available tools:
-- retrieve_context: Search HR documents for relevant information
-- manage_tasks: Create, update, list, or complete onboarding tasks
-
-When the user wants to create a task, ask clarifying questions to get:
-1. Task title (required)
-2. Task description (optional)
-3. Due date (optional)
-4. Priority: low, medium, high (default: medium)
-
-When the user asks about task status, use the manage_tasks tool with operation "list" to show their current tasks.
+Rules for answering:
+- Answer ONLY from the provided document context. If a detail is not in the context, politely state: "I couldn't find specific details for that in our onboarding documents, but you can reach out to your HR Business Partner at hr.global@optiagent.com."
+- When citing policies, reference the document name and section clearly.
+- Format answers cleanly with markdown headings, bullet points, and emoji badges for readability.
+- Maintain conversation context across turns.
 """
-
-TASK_CREATION_PROMPT = """The user wants to create an onboarding task. Extract the following from the conversation:
-- title: Brief task title (required)
-- description: Detailed description (optional)
-- due_date: Due date in YYYY-MM-DD format (optional)
-- priority: low, medium, or high (default: medium)
-
-If any required information is missing, ask the user for it. Once you have all the information, confirm with the user before creating the task.
-"""
-
-TASK_STATUS_PROMPT = """The user wants to check their onboarding task status. Use the manage_tasks tool with operation "list" to retrieve their current tasks and present them in a clear, organized way."""
 
 
 async def onboarding_agent_node(
@@ -66,192 +39,258 @@ async def onboarding_agent_node(
     llm_service: LLMService,
 ) -> dict[str, Any]:
     """Onboarding agent node for LangGraph."""
-    question = state.get("question", "")
-    user_id = state.get("user_id", "")
+    question = state.get("question", "").strip()
+    user_id = state.get("user_id", "") or "default-user"
     conversation_id = state.get("conversation_id", "")
     messages = state.get("messages", [])
-    
+
     settings = get_settings()
     vector_service = retrieval_tool.vector_service
     retrieval_svc = RetrievalService(vector_service=vector_service)
     pipeline = RetrievalPipeline(service=retrieval_svc)
     task_tool = TaskTool()
-    
-    # Check if user is asking about task creation or task status
+
     question_lower = question.lower()
-    
-    # Determine intent
-    wants_task_creation = any(keyword in question_lower for keyword in [
-        "create task", "add task", "new task", "make task", "schedule task", "task for"
+
+    # ── Intent Classification ──────────────────────────────────────────────────
+    is_task_list_query = any(k in question_lower for k in [
+        "what tasks", "my tasks", "show tasks", "list tasks", "task status",
+        "check tasks", "onboarding checklist", "my checklist", "what do i need to do",
+        "tasks remaining", "tasks left", "progress"
     ])
-    wants_task_status = any(keyword in question_lower for keyword in [
-        "my tasks", "task status", "show tasks", "list tasks", "what tasks", "check tasks"
+
+    is_task_complete_action = any(k in question_lower for k in [
+        "mark done", "mark complete", "marked as complete", "mark as completed",
+        "completed task", "finished task", "i finished", "i have completed",
+        "complete task", "done with", "mark as done"
     ])
-    wants_task_completion = any(keyword in question_lower for keyword in [
-        "complete task", "finish task", "mark done", "task done", "completed task"
+
+    is_task_create_action = any(k in question_lower for k in [
+        "create task", "add task", "new task", "make a task", "schedule task",
+        "add to my tasks", "add that to my tasks", "add this as a task",
+        "remind me to", "create a task", "add a task"
     ])
-    
-    # Handle task operations
-    if wants_task_creation or wants_task_status or wants_task_completion:
-        if wants_task_creation:
-            # Check if we have enough info from conversation
-            # For now, we'll use the LLM to extract task info and create it
-            task_prompt = f"""
-{ONBOARDING_SYSTEM_PROMPT}
 
-{TASK_CREATION_PROMPT}
+    # ── Task Operation 1: List Tasks / Check Status ───────────────────────────
+    if is_task_list_query and not is_task_create_action and not is_task_complete_action:
+        result = await task_tool.execute(operation=TaskOperation.LIST, user_id=user_id)
+        tasks = result.tasks
+        completed = [t for t in tasks if t.get("status") == "completed"]
+        in_progress = [t for t in tasks if t.get("status") == "in_progress"]
+        pending = [t for t in tasks if t.get("status") == "pending"]
 
-Current conversation:
-{json.dumps(messages[-6:], indent=2)}
+        pct = round((len(completed) / len(tasks) * 100)) if tasks else 0
 
-User's latest message: {question}
+        lines = [
+            f"### 📋 Your Onboarding Task Checklist",
+            f"**Overall Progress: {pct}% Complete** ({len(completed)} of {len(tasks)} tasks finished)\n",
+        ]
 
-Respond with either:
-1. A question to get missing information
-2. A confirmation message summarizing the task to be created
-3. A JSON object with the task details if user confirmed
+        if in_progress:
+            lines.append("#### ⏳ In Progress")
+            for t in in_progress:
+                due = f" (Due: {t['due_date']})" if t.get("due_date") else ""
+                lines.append(f"- **{t['title']}** — Priority: `{t['priority'].upper()}` | Category: `{t.get('category', 'HR')}`{due}")
+
+        if pending:
+            lines.append("\n#### 📌 Pending")
+            for t in pending:
+                due = f" (Due: {t['due_date']})" if t.get("due_date") else ""
+                lines.append(f"- **{t['title']}** — Priority: `{t['priority'].upper()}` | Category: `{t.get('category', 'HR')}`{due}")
+
+        if completed:
+            lines.append("\n#### ✅ Completed")
+            for t in completed:
+                lines.append(f"- ~~{t['title']}~~ — Completed")
+
+        lines.append("\n💡 *Tip: You can tell me 'Mark [task name] as complete' or 'Add a task for [action]' anytime!*")
+        response_text = "\n".join(lines)
+
+        return {
+            "answer": response_text,
+            "selected_agent": "onboarding_agent",
+            "citations": [],
+            "model": "task_service",
+            "provider": "system",
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "latency_ms": 10.0,
+            "messages": messages + [
+                {"role": "user", "content": question},
+                {"role": "assistant", "content": response_text},
+            ],
+        }
+
+    # ── Task Operation 2: Mark Task Complete ──────────────────────────────────
+    if is_task_complete_action:
+        # Extract task title from input using LLM or direct regex
+        target_name = question
+        for prefix in ["mark", "as complete", "as completed", "as done", "completed", "finished", "i have", "task"]:
+            target_name = re.sub(rf"\b{prefix}\b", "", target_name, flags=re.IGNORECASE)
+        target_name = target_name.strip(" !.,?:;\"'")
+
+        result = await task_tool.execute(
+            operation=TaskOperation.COMPLETE,
+            user_id=user_id,
+            title=target_name or question,
+        )
+
+        if result.success and result.tasks:
+            completed_task = result.tasks[0]
+            # List remaining tasks
+            list_res = await task_tool.execute(operation=TaskOperation.LIST, user_id=user_id)
+            total = len(list_res.tasks)
+            done_count = len([t for t in list_res.tasks if t.get("status") == "completed"])
+            pct = round((done_count / total * 100)) if total else 100
+
+            response_text = (
+                f"🎉 **Great progress!** I've marked **\"{completed_task['title']}\"** as **Completed**.\n\n"
+                f"📊 Your onboarding progress is now **{pct}%** ({done_count}/{total} tasks complete).\n\n"
+                f"Let me know if you need help with your next pending tasks or have questions about policies!"
+            )
+        else:
+            response_text = (
+                f"I couldn't identify which specific task to mark as complete. "
+                f"You can say *\"Show my tasks\"* to see your current list, then *\"Mark [Task Name] as done\"*."
+            )
+
+        return {
+            "answer": response_text,
+            "selected_agent": "onboarding_agent",
+            "citations": [],
+            "model": "task_service",
+            "provider": "system",
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "latency_ms": 15.0,
+            "messages": messages + [
+                {"role": "user", "content": question},
+                {"role": "assistant", "content": response_text},
+            ],
+        }
+
+    # ── Task Operation 3: Create Task ─────────────────────────────────────────
+    if is_task_create_action:
+        # Use LLM to extract task parameters contextually from multi-turn history
+        extraction_prompt = f"""You are an HR task extraction assistant.
+Extract task details from the user's request and prior conversation context.
+
+Conversation history:
+{json.dumps(messages[-4:], indent=2)}
+
+User request: "{question}"
+
+Output JSON ONLY with this structure:
+{{
+  "title": "Clear concise task title",
+  "description": "Brief description or empty string",
+  "category": "HR" | "IT" | "Finance" | "Compliance",
+  "priority": "low" | "medium" | "high",
+  "due_date": "YYYY-MM-DD" or null
+}}
 """
-            
-            # Get LLM response for task creation
-            llm_messages = [
-                {"role": "system", "content": task_prompt},
-                {"role": "user", "content": question}
-            ]
-            
-            llm_response = await llm_service.complete(llm_messages)
-            response_content = llm_response.content
-            
-            # Try to parse JSON for task creation
-            try:
-                import re
-                json_match = re.search(r'\{.*\}', response_content, re.DOTALL)
-                if json_match:
-                    task_data = json.loads(json_match.group())
-                    # Create the task
-                    result = await task_tool.execute(
-                        operation=TaskOperation.CREATE,
-                        user_id=user_id,
-                        title=task_data.get("title"),
-                        description=task_data.get("description"),
-                        due_date=task_data.get("due_date"),
-                        priority=task_data.get("priority", "medium"),
-                    )
-                    response_content = f"✅ Task created successfully!\n\n**{task_data.get('title')}**\n{task_data.get('description', '')}\n\nPriority: {task_data.get('priority', 'medium').capitalize()}\nDue: {task_data.get('due_date', 'Not set')}"
-            except (json.JSONDecodeError, KeyError):
-                pass  # Not a JSON response, just return the LLM response
-            
-            return {
-                "answer": response_content,
-                "selected_agent": "onboarding_agent",
-                "citations": [],
-                "model": llm_response.model,
-                "provider": llm_response.provider,
-                "prompt_tokens": llm_response.usage.prompt_tokens,
-                "completion_tokens": llm_response.usage.completion_tokens,
-                "latency_ms": llm_response.latency_ms,
-                "messages": messages + [
-                    {"role": "user", "content": question},
-                    {"role": "assistant", "content": response_content}
-                ],
-            }
-        
-        elif wants_task_status:
-            # List user's tasks
-            result = await task_tool.execute(
-                operation=TaskOperation.LIST,
-                user_id=user_id,
-            )
-            
-            if result.tasks:
-                task_list = "\n".join([
-                    f"- **{t['title']}** ({t['status']}) - Priority: {t['priority']}"
-                    + (f", Due: {t['due_date']}" if t.get('due_date') else "")
-                    for t in result.tasks
-                ])
-                response = f"Here are your current onboarding tasks:\n\n{task_list}"
+        extract_response = await llm_service.complete([
+            {"role": "system", "content": "You output valid JSON only."},
+            {"role": "user", "content": extraction_prompt},
+        ])
+
+        try:
+            json_match = re.search(r"\{.*\}", extract_response.content, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                title = data.get("title") or question
+                cat = data.get("category", "HR")
+                prio = data.get("priority", "medium").lower()
+                due = data.get("due_date")
+
+                res = await task_tool.execute(
+                    operation=TaskOperation.CREATE,
+                    user_id=user_id,
+                    title=title,
+                    description=data.get("description", ""),
+                    category=cat,
+                    priority=TaskPriority(prio) if prio in ["low", "medium", "high"] else TaskPriority.MEDIUM,
+                    due_date=due,
+                )
+
+                response_text = (
+                    f"✅ **Task Created Successfully!**\n\n"
+                    f"📌 **{title}**\n"
+                    f"- **Category**: `{cat}`\n"
+                    f"- **Priority**: `{prio.capitalize()}`\n"
+                    f"- **Due Date**: `{due if due else 'Within first 2 weeks'}`\n\n"
+                    f"This has been added to your Onboarding Checklist. Ask me *'Show my tasks'* anytime to view your progress!"
+                )
             else:
-                response = "You don't have any onboarding tasks yet. Would you like to create one?"
-            
-            return {
-                "answer": response,
-                "selected_agent": "onboarding_agent",
-                "citations": [],
-                "model": "",
-                "provider": "",
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "latency_ms": 0,
-                "messages": messages + [
-                    {"role": "user", "content": question},
-                    {"role": "assistant", "content": response}
-                ],
-            }
-        
-        elif wants_task_completion:
-            # Ask which task to complete
-            result = await task_tool.execute(
-                operation=TaskOperation.LIST,
+                response_text = "I've noted that! What title would you like to give to this onboarding task?"
+        except Exception:
+            res = await task_tool.execute(
+                operation=TaskOperation.CREATE,
                 user_id=user_id,
+                title=question,
+                category="HR",
             )
-            
-            if not result.tasks:
-                response = "You don't have any tasks to complete."
-            else:
-                task_list = "\n".join([
-                    f"- {t['title']} (ID: {t['task_id'][:8]}...)"
-                    for t in result.tasks if t['status'] != 'completed'
-                ])
-                response = f"Which task would you like to mark as complete?\n\n{task_list}\n\nPlease provide the task title or ID."
-            
-            return {
-                "answer": response,
-                "selected_agent": "onboarding_agent",
-                "citations": [],
-                "model": "",
-                "provider": "",
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "latency_ms": 0,
-                "messages": messages + [
-                    {"role": "user", "content": question},
-                    {"role": "assistant", "content": response}
-                ],
-            }
-    
-    # Regular Q&A - run retrieval pipeline
+            response_text = f"✅ Created task: **{question}** on your onboarding checklist."
+
+        return {
+            "answer": response_text,
+            "selected_agent": "onboarding_agent",
+            "citations": [],
+            "model": extract_response.model,
+            "provider": extract_response.provider,
+            "prompt_tokens": extract_response.usage.prompt_tokens,
+            "completion_tokens": extract_response.usage.completion_tokens,
+            "latency_ms": extract_response.latency_ms,
+            "messages": messages + [
+                {"role": "user", "content": question},
+                {"role": "assistant", "content": response_text},
+            ],
+        }
+
+    # ── Standard Grounded Q&A via RAG ──────────────────────────────────────────
     retrieval_cfg = RetrievalConfig(
-        top_k_search=20,
+        top_k_search=15,
         top_k_rerank=5,
-        min_score=0.3,
+        min_score=0.25,
         department=None,
         document_id=None,
     )
-    
+
     retrieval_result = await pipeline.run(question, retrieval_cfg)
-    
-    # Build messages with context
+
+    # Build prompt with retrieved context
     history = messages[-settings.conversation_history_window * 2:] if messages else []
     history_dicts = [{"role": m.get("role", "user"), "content": m.get("content", "")} for m in history]
-    
+
     builder = PromptBuilder()
     base_messages = builder.build_messages(retrieval_result.context, question)
-    
-    messages_for_llm = (
-        [base_messages[0]]  # system
-        + history_dicts
-        + [base_messages[1]]  # current user message with context
-    )
-    
-    # Call LLM
+
+    # Insert system prompt enhancement
+    system_msg = {
+        "role": "system",
+        "content": (
+            f"{ONBOARDING_SYSTEM_PROMPT}\n\n"
+            f"RETRIEVED ONBOARDING CONTEXT:\n{retrieval_result.context}\n\n"
+            "INSTRUCTIONS:\n"
+            "- Provide accurate, helpful answers based on the context above.\n"
+            "- Always cite the source document and section name.\n"
+            "- If applicable, mention relevant onboarding steps or timelines (Day 1, Week 1, 30 days).\n"
+            "- If the question discusses an action item (e.g. enrolling in benefits or setting up VPN), offer to create a task."
+        ),
+    }
+
+    messages_for_llm = [system_msg] + history_dicts + [{"role": "user", "content": question}]
+
+    # Complete LLM call
     llm_response = await llm_service.complete(messages_for_llm)
-    
+
     citations = retrieval_result.citations
-    
+
     return {
         "answer": llm_response.content,
         "selected_agent": "onboarding_agent",
         "retrieved_context": retrieval_result.context,
-        "citations": [c.model_dump() if hasattr(c, 'model_dump') else c for c in citations],
+        "citations": [c.model_dump() if hasattr(c, "model_dump") else c for c in citations],
         "model": llm_response.model,
         "provider": llm_response.provider,
         "prompt_tokens": llm_response.usage.prompt_tokens,
@@ -259,6 +298,6 @@ Respond with either:
         "latency_ms": llm_response.latency_ms,
         "messages": messages + [
             {"role": "user", "content": question},
-            {"role": "assistant", "content": llm_response.content}
+            {"role": "assistant", "content": llm_response.content},
         ],
     }

@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Task, CreateTaskRequest, UpdateTaskRequest, TaskPriority } from '../types';
+import type { Task, CreateTaskRequest, UpdateTaskRequest, TaskPriority, TaskCategory, TaskStatus } from '../types';
 import { z } from 'zod';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().optional(),
+  category: z.enum(['HR', 'IT', 'Finance', 'Compliance', 'General']).default('HR'),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).default('pending'),
   due_date: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
 });
@@ -35,6 +37,8 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
     defaultValues: {
       title: '',
       description: '',
+      category: 'HR',
+      status: 'pending',
       due_date: '',
       priority: 'medium',
     },
@@ -45,6 +49,8 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
       form.reset({
         title: initialData.title,
         description: initialData.description ?? '',
+        category: (initialData.category as TaskCategory) || 'HR',
+        status: (initialData.status as TaskStatus) || 'pending',
         due_date: initialData.due_date ? initialData.due_date.split('T')[0] : '',
         priority: initialData.priority,
       });
@@ -52,6 +58,8 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
       form.reset({
         title: '',
         description: '',
+        category: 'HR',
+        status: 'pending',
         due_date: '',
         priority: 'medium',
       });
@@ -62,6 +70,8 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
     const submitData: CreateTaskRequest | UpdateTaskRequest = {
       title: data.title,
       description: data.description || undefined,
+      category: data.category as TaskCategory,
+      status: data.status as TaskStatus,
       due_date: data.due_date || undefined,
       priority: data.priority as TaskPriority,
     };
@@ -71,15 +81,15 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-card rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">
-            {isEditing ? 'Edit Task' : 'Create Onboarding Task'}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-auto border border-slate-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+          <h3 className="text-base font-semibold text-slate-900">
+            {isEditing ? 'Edit Onboarding Task' : 'New Onboarding Task'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-muted transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -87,7 +97,7 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
         </div>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="p-4 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="title">Task Title *</Label>
+            <Label htmlFor="title" className="text-xs font-semibold text-slate-700">Task Title *</Label>
             <Input
               id="title"
               {...form.register('title')}
@@ -95,44 +105,49 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
               disabled={loading}
             />
             {form.formState.errors.title && (
-              <p className="text-sm text-red-500">{form.formState.errors.title.message}</p>
+              <p className="text-xs text-rose-500">{form.formState.errors.title.message}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-xs font-semibold text-slate-700">Description</Label>
             <Textarea
               id="description"
               {...form.register('description')}
-              placeholder="Add details about this task..."
+              placeholder="Add instructions or links..."
               rows={3}
               disabled={loading}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="due_date">Due Date</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="due_date"
-                  type="date"
-                  {...form.register('due_date')}
-                  className="pl-10"
-                  disabled={loading}
-                />
-              </div>
+              <Label htmlFor="category" className="text-xs font-semibold text-slate-700">Category</Label>
+              <Select
+                value={form.watch('category')}
+                onValueChange={(v) => form.setValue('category', v as TaskCategory)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="IT">IT</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Compliance">Compliance</SelectItem>
+                  <SelectItem value="General">General</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority" className="text-xs font-semibold text-slate-700">Priority</Label>
               <Select
-                value={form.watch('priority') as TaskPriority}
+                value={form.watch('priority')}
                 onValueChange={(v) => form.setValue('priority', v as TaskPriority)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
+                  <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
@@ -143,11 +158,25 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="space-y-1.5">
+            <Label htmlFor="due_date" className="text-xs font-semibold text-slate-700">Due Date</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="due_date"
+                type="date"
+                {...form.register('due_date')}
+                className="pl-9"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-teal-700 hover:bg-teal-800 text-white">
               {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Task'}
             </Button>
           </div>
@@ -156,3 +185,4 @@ export function TaskFormModal({ open, onClose, onSubmit, initialData, isEditing,
     </div>
   );
 }
+

@@ -5,8 +5,8 @@
 import { generateKeyPairSync } from 'node:crypto';
 import pino from 'pino';
 import { Container } from 'inversify';
-import { Role } from '@optiagent/shared';
-import type { Paginated } from '@optiagent/shared';
+import { Role } from '@hr-onboarding/shared';
+import type { Paginated } from '@hr-onboarding/shared';
 import { TYPES } from '../../src/core/di/types';
 import type { AppConfig } from '../../src/config/env';
 import { JwtService, type IJwtService } from '../../src/infrastructure/security/jwt.service';
@@ -24,6 +24,19 @@ import type { IAuditLogService } from '../../src/infrastructure/audit/audit-log.
 import { bindAuthModule } from '../../src/modules/auth/auth.container';
 import { bindUsersModule } from '../../src/modules/users/user.container';
 import { bindRolesModule } from '../../src/modules/roles/roles.container';
+import { departmentModule } from '../../src/modules/departments/department.container';
+import { documentModule } from '../../src/modules/documents/document.container';
+import { conversationModule } from '../../src/modules/conversations/conversation.container';
+import { dashboardModule } from '../../src/modules/dashboard/dashboard.container';
+import { analyticsModule } from '../../src/modules/analytics/analytics.container';
+import { auditLogsModule } from '../../src/modules/audit-logs/audit-logs.container';
+import { notificationModule } from '../../src/modules/notifications/notification.container';
+import { adminSettingsModule } from '../../src/modules/admin-settings/admin-settings.container';
+import { onboardingModule } from '../../src/modules/onboarding/application/onboarding.container';
+import { DepartmentAccessService } from '../../src/core/auth/department-access.service';
+import { LocalStorageService } from '../../src/infrastructure/storage/local-storage.service';
+import { BullMQIndexingQueue } from '../../src/infrastructure/queue/bullmq-indexing-queue';
+import { AiGateway } from '../../src/infrastructure/ai/ai-gateway';
 
 /** Build a valid AppConfig with a freshly generated RS256 keypair. */
 export function makeTestConfig(): AppConfig {
@@ -213,6 +226,19 @@ export async function buildTestContainer(): Promise<TestHarness> {
   bindUsersModule(container);
   bindAuthModule(container);
   bindRolesModule(container);
+  container.bind(TYPES.DepartmentAccessService).to(DepartmentAccessService).inSingletonScope();
+  container.bind(TYPES.StorageService).to(LocalStorageService).inSingletonScope();
+  container.bind(TYPES.IndexingQueue).to(BullMQIndexingQueue).inSingletonScope();
+  container.bind(TYPES.AiGateway).to(AiGateway).inSingletonScope();
+  container.load(departmentModule);
+  container.load(documentModule);
+  container.load(conversationModule);
+  container.load(dashboardModule);
+  container.load(analyticsModule);
+  container.load(auditLogsModule);
+  container.load(notificationModule);
+  container.load(adminSettingsModule);
+  container.load(onboardingModule);
   // Replace the Prisma repository (bound by the module) with the in-memory instance.
   container.rebind<IUserRepository>(TYPES.UserRepository).toConstantValue(userRepo);
 

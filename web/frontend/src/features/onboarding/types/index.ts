@@ -13,11 +13,14 @@ export enum TaskPriority {
   HIGH = 'high',
 }
 
+export type TaskCategory = 'HR' | 'IT' | 'Finance' | 'Compliance' | 'General';
+
 export interface Task {
   task_id: string;
   user_id: string;
   title: string;
   description: string;
+  category?: TaskCategory;
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
@@ -29,13 +32,16 @@ export interface Task {
 export interface CreateTaskRequest {
   title: string;
   description?: string;
+  category?: TaskCategory;
   due_date?: string;
   priority?: TaskPriority;
+  status?: TaskStatus;
 }
 
 export interface UpdateTaskRequest {
   title?: string;
   description?: string;
+  category?: TaskCategory;
   status?: TaskStatus;
   priority?: TaskPriority;
   due_date?: string;
@@ -46,24 +52,36 @@ export interface TaskListResponse {
   total: number;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: string;
+export interface OnboardingOverview {
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  pendingTasks: number;
+  progressPercentage: number;
 }
 
 export interface Citation {
-  document_id: string;
-  chunk_id: string;
+  filename?: string;
+  page?: number | null;
+  section?: string | null;
+  score?: number | null;
+  document_id?: string;
+  chunk_id?: string;
+  content?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
   content: string;
-  score: number;
-  metadata: Record<string, unknown>;
+  citations?: Citation[];
+  timestamp?: string;
 }
 
 export interface OnboardingChatRequest {
   question: string;
   conversation_id?: string;
-  user_id: string;
+  user_id?: string;
 }
 
 export interface OnboardingChatResponse {
@@ -73,10 +91,7 @@ export interface OnboardingChatResponse {
   model: string;
   provider: string;
   latency_ms: number;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
   tasks_updated?: boolean;
+  tasks?: Task[];
 }
+

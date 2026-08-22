@@ -35,8 +35,7 @@ export class UserController {
       ipAddress: req.ip,
       requestId: res.locals.requestId,
     });
-    res.status(201);
-    sendSuccess(res, user);
+    sendSuccess(res, user, 201);
   };
 
   update = async (req: Request, res: Response): Promise<void> => {

@@ -5,6 +5,7 @@ import type {
   TaskListResponse,
   CreateTaskRequest,
   UpdateTaskRequest,
+  OnboardingOverview,
   OnboardingChatRequest,
   OnboardingChatResponse,
 } from '../types';
@@ -18,6 +19,12 @@ export const onboardingApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+    }),
+
+    // Overview stats endpoint
+    getOverview: builder.query<OnboardingOverview, void>({
+      query: () => '/onboarding/overview',
+      providesTags: ['Task'],
     }),
 
     // Task endpoints
@@ -46,7 +53,7 @@ export const onboardingApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (_, __, { taskId }) => [{ type: 'Task', id: taskId }],
+      invalidatesTags: ['Task'],
     }),
 
     completeTask: builder.mutation<Task, string>({
@@ -54,7 +61,7 @@ export const onboardingApi = baseApi.injectEndpoints({
         url: `/onboarding/tasks/${taskId}/complete`,
         method: 'PATCH',
       }),
-      invalidatesTags: (_, __, taskId) => [{ type: 'Task', id: taskId }],
+      invalidatesTags: ['Task'],
     }),
 
     deleteTask: builder.mutation<void, string>({
@@ -69,6 +76,7 @@ export const onboardingApi = baseApi.injectEndpoints({
 
 export const {
   useSendMessageMutation,
+  useGetOverviewQuery,
   useGetTasksQuery,
   useCreateTaskMutation,
   useGetTaskQuery,
