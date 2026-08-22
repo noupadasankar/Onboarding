@@ -1,8 +1,8 @@
 {
-  "name": "@optiagent/shared",
+  "name": "@hr-onboarding/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared contracts: DTOs, RBAC enums, Zod schemas, API envelope",
+  "description": "Shared contracts: DTOs, Zod schemas, API envelope for HR Onboarding AI",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

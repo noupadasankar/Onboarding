@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { UserDTO } from '@optiagent/shared';
-import { Permission } from '@optiagent/shared';
+import type { UserDTO } from '@hr-onboarding/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUsers } from '../hooks/useUsers';

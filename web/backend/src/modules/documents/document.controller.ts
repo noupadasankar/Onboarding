@@ -13,7 +13,7 @@ import { TYPES } from '../../core/di/types';
 import { asyncHandler } from '../../core/http/async-handler';
 import { ApiResponse } from '../../core/http/api-response';
 import { AppError } from '../../core/errors/app-error';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import type { IDocumentService } from './application/document.service';
 import type { DocumentStatus } from './domain/document.repository';
 

@@ -11,7 +11,7 @@
  */
 import { Router, type RequestHandler } from 'express';
 import type { Container } from 'inversify';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { TYPES } from '../../core/di/types';
 import { requirePermission } from '../../middleware/authorize.middleware';
 import { validate } from '../../middleware/validate.middleware';

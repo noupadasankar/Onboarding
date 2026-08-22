@@ -4,13 +4,13 @@
  * interfaces, keeping this service trivially unit-testable.
  */
 import { inject, injectable } from 'inversify';
-import type { AuthUser, CreateUserRequest, Paginated, UpdateUserRequest } from '@optiagent/shared';
+import type { AuthUser, CreateUserRequest, Paginated, UpdateUserRequest } from '@hr-onboarding/shared';
 import { TYPES } from '../../../core/di/types';
 import { ConflictError, NotFoundError } from '../../../core/errors/app-error';
 import type { IAuditLogService } from '../../../infrastructure/audit/audit-log.service';
 import type { IPasswordService } from '../../../infrastructure/security/password.service';
 import type { IUserRepository, UserListFilters } from '../domain/user.repository';
-import type { UserDTO } from '@optiagent/shared';
+import type { UserDTO } from '@hr-onboarding/shared';
 
 export interface IUserService {
   list(page: number, pageSize: number, filters?: UserListFilters): Promise<Paginated<UserDTO>>;

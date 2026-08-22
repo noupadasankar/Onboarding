@@ -3,7 +3,7 @@
  * middleware and consumed by authorize + controllers. `res.locals.requestId`
  * is set by the request-id middleware.
  */
-import type { Permission, Role } from '@optiagent/shared';
+import type { Permission, Role } from '@hr-onboarding/shared';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

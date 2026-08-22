@@ -7,13 +7,13 @@
  */
 import { Router, Request, Response, NextFunction } from 'express';
 import type { Container } from 'inversify';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { TYPES } from '../../core/di/types';
 import { createAuthorize } from '../../middleware/authorize.middleware';
 import type { DocumentController } from './document.controller';
 import type { AuthMiddleware } from '../../middleware/authenticate.middleware';
 import { sendFailure } from '../../core/http/api-response';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50 MB
 

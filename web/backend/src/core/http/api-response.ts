@@ -1,6 +1,6 @@
 /** Helpers that write the shared API envelope onto an Express response. */
 import type { Response } from 'express';
-import type { ApiFailure, ApiSuccess } from '@optiagent/shared';
+import type { ApiFailure, ApiSuccess } from '@hr-onboarding/shared';
 
 export function sendSuccess<T>(res: Response, data: T, status = 200): void {
   const body: ApiSuccess<T> = {

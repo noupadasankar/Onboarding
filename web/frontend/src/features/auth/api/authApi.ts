@@ -1,5 +1,5 @@
-import type { ApiResponse, AuthResponse, AuthUser, LoginRequest } from '@optiagent/shared';
-import { isApiFailure } from '@optiagent/shared';
+import type { ApiResponse, AuthResponse, AuthUser, LoginRequest } from '@hr-onboarding/shared';
+import { isApiFailure } from '@hr-onboarding/shared';
 import { baseApi } from '@/app/api/baseApi';
 
 /** Unwrap the shared `{ success, data }` envelope to the payload RTK Query caches. */

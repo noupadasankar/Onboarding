@@ -4,7 +4,7 @@
  */
 import { inject, injectable } from 'inversify';
 import type { Request, Response } from 'express';
-import type { LoginInput, RefreshInput } from '@optiagent/shared';
+import type { LoginInput, RefreshInput } from '@hr-onboarding/shared';
 import { TYPES } from '../../core/di/types';
 import { sendSuccess } from '../../core/http/api-response';
 import type { IAuthService } from './application/auth.service';

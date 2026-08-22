@@ -4,4 +4,4 @@ export type {
   UpdateUserRequest,
   RoleDTO,
   UserListQuery,
-} from '@optiagent/shared';
+} from '@hr-onboarding/shared';

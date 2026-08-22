@@ -11,8 +11,9 @@ import {
   Settings,
   LogOut,
   Zap,
+  Bot,
 } from 'lucide-react';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useListNotificationsQuery } from '@/features/notifications/api/notificationsApi';
@@ -72,6 +73,11 @@ export function Sidebar() {
         <NavLink to="/chat" className={navLink}>
           <MessageSquare className="h-4 w-4 shrink-0" />
           AI Assistant
+        </NavLink>
+
+        <NavLink to="/onboarding" className={navLink}>
+          <Bot className="h-4 w-4 shrink-0" />
+          Onboarding
         </NavLink>
 
         <Section label="Workspace" />

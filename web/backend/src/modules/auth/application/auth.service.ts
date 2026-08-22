@@ -4,8 +4,8 @@
  * All collaborators are interfaces injected via DI — enabling isolated unit tests.
  */
 import { inject, injectable } from 'inversify';
-import type { AuthResponse, TokenPair } from '@optiagent/shared';
-import { ErrorCode } from '@optiagent/shared';
+import type { AuthResponse, TokenPair } from '@hr-onboarding/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import { TYPES } from '../../../core/di/types';
 import { UnauthorizedError } from '../../../core/errors/app-error';
 import type { IUserRepository } from '../../users/domain/user.repository';

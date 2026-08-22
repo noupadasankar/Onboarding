@@ -7,7 +7,7 @@ import type { RedisService } from '@infrastructure/cache/redis.service';
 import { TYPES } from '@core/di/types';
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '@core/errors/app-error';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 
 export interface RateLimitOptions {
   bucket: string;

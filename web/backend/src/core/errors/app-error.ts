@@ -3,7 +3,7 @@
  * error-handler middleware can translate it into the shared API envelope without
  * leaking stack traces to clients.
  */
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 
 export class AppError extends Error {
   readonly statusCode: number;

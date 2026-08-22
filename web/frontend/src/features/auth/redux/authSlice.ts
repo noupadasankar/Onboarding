@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { AuthResponse } from '@optiagent/shared';
+import type { AuthResponse } from '@hr-onboarding/shared';
 import { AUTH_STORAGE_KEY } from '../constants';
 import type { AuthState } from '../types';
 

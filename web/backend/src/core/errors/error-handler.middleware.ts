@@ -5,7 +5,7 @@
  */
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import type { Logger } from '../logging/logger';
 import { sendFailure } from '../http/api-response';
 import { AppError } from './app-error';

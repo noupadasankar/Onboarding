@@ -6,7 +6,7 @@
  */
 import type { RequestHandler } from 'express';
 import type { Container } from 'inversify';
-import type { Permission } from '@optiagent/shared';
+import type { Permission } from '@hr-onboarding/shared';
 import { ForbiddenError, UnauthorizedError } from '../core/errors/app-error';
 
 export function requirePermission(...required: Permission[]): RequestHandler {

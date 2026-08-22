@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import type { Permission } from '@optiagent/shared';
+import type { Permission } from '@hr-onboarding/shared';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { FeatureErrorBoundary } from '@/shared/components/FeatureErrorBoundary';
 

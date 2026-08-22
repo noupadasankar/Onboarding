@@ -1,6 +1,6 @@
-import type { AuthResponse, AuthUser } from '@optiagent/shared';
+import type { AuthResponse, AuthUser } from '@hr-onboarding/shared';
 
-export type { AuthResponse, AuthUser, LoginRequest, TokenPair } from '@optiagent/shared';
+export type { AuthResponse, AuthUser, LoginRequest, TokenPair } from '@hr-onboarding/shared';
 
 export interface AuthState {
   user: AuthUser | null;

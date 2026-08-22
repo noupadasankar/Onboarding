@@ -32,7 +32,7 @@ export class FeatureErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error(`[FeatureErrorBoundary:${this.props.featureName}]`, error, errorInfo);
     // Could send to error tracking service (Sentry, etc.)
   }

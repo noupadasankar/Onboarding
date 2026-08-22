@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(default="info")
 
-    # ── Security — internal gateway token (Increment 2) ──────────────────────
+    # ── Security — internal gateway token ─────────────────────────────────────
     # Required: the Node backend must present this on every request.
     internal_service_token: str = Field(min_length=1)
     # Configurable so header name can be rotated without code changes.
@@ -38,15 +38,15 @@ class Settings(BaseSettings):
     # Browsers never call this service directly; CORS is for local debugging.
     allowed_origins: str = Field(default="")
 
-    # ── Vector database (Increment 6) ─────────────────────────────────────────
+    # ── Vector database ───────────────────────────────────────────────────────
     chroma_url: str = Field(default="http://localhost:8200")
-    chroma_collection: str = Field(default="hr_documents")
+    chroma_collection: str = Field(default="hr_onboarding_documents")
     chroma_tenant: str = Field(default="default_tenant")
     chroma_database: str = Field(default="default_database")
     # "http" uses the HTTP client (remote server); "memory" uses ephemeral in-process client (tests/dev)
     chroma_mode: str = Field(default="http")
 
-    # ── LLM providers (Increment 8) ───────────────────────────────────────────
+    # ── LLM providers ─────────────────────────────────────────────────────────
     anthropic_api_key: str = Field(default="")
     openai_api_key: str = Field(default="")
     # Optional: override the OpenAI API base URL (e.g. https://api.groq.com/openai/v1 for Groq)
@@ -61,21 +61,21 @@ class Settings(BaseSettings):
     # Max conversation turns sent as history to the LLM (each turn = 2 messages)
     conversation_history_window: int = Field(default=10)
 
-    # ── Redis — conversation memory (Increment 10) ────────────────────────────
+    # ── Redis — conversation memory ───────────────────────────────────────────
     redis_url: str = Field(default="redis://localhost:6379/0")
 
-    # ── Data storage (Increment 3) ────────────────────────────────────────────
+    # ── Data storage ──────────────────────────────────────────────────────────
     # Absolute or relative path to the HR documents directory.
     # When set, uploaded originals are saved to disk after successful ingestion.
     # Leave empty to skip disk persistence (default for tests and CI).
     hr_documents_dir: str = Field(default="")
 
-    # ── Chunk export (Increment 4) ────────────────────────────────────────────
+    # ── Chunk export ──────────────────────────────────────────────────────────
     # When set, the chunk pipeline writes a JSON debug file per document to
     # this directory. Very useful during development; leave empty in production.
     chunk_export_dir: str = Field(default="")
 
-    # ── Embeddings (Increment 5) ──────────────────────────────────────────────
+    # ── Embeddings ────────────────────────────────────────────────────────────
     # Provider: openai | voyage | local (default local — no API key required)
     embedding_provider: str = Field(default="local")
     # Model identifier — must match the chosen provider's supported models.

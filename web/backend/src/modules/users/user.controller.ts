@@ -4,7 +4,7 @@
  */
 import { inject, injectable } from 'inversify';
 import type { Request, Response } from 'express';
-import type { CreateUserRequest, UpdateUserRequest, UserListQuery } from '@optiagent/shared';
+import type { CreateUserRequest, UpdateUserRequest, UserListQuery } from '@hr-onboarding/shared';
 import { TYPES } from '../../core/di/types';
 import { sendSuccess } from '../../core/http/api-response';
 import type { IUserService } from './application/user.service';

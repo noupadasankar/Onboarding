@@ -4,7 +4,7 @@ import type {
   FetchArgs,
   FetchBaseQueryError,
 } from '@reduxjs/toolkit/query';
-import type { ApiResponse, AuthResponse } from '@optiagent/shared';
+import type { ApiResponse, AuthResponse } from '@hr-onboarding/shared';
 import type { RootState } from '../store';
 import { clearCredentials, setCredentials } from '@/features/auth/redux/authSlice';
 
@@ -128,6 +128,6 @@ const baseQueryWithReauth: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Role', 'Analytics', 'Notification', 'Conversation', 'Department', 'AdminSetting', 'Document'],
+  tagTypes: ['User', 'Role', 'Analytics', 'Notification', 'Conversation', 'Department', 'AdminSetting', 'Document', 'Task'],
   endpoints: () => ({}),
 });

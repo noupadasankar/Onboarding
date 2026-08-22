@@ -1,8 +1,8 @@
 {
-  "name": "optiagent",
+  "name": "hr-onboarding-ai",
   "version": "0.1.0",
   "private": true,
-  "description": "OptiAgent — Multi-Agent AI Enterprise Operations Platform (Deloitte Capstone 2026)",
+  "description": "HR Onboarding AI Employee — Conversational agent for new hire onboarding with document-grounded Q&A and task tracking",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20 <27",
@@ -14,12 +14,12 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
-    "dev:backend": "pnpm --filter @optiagent/backend dev",
-    "dev:frontend": "pnpm --filter @optiagent/frontend dev",
+    "dev:backend": "pnpm --filter @hr-onboarding/backend dev",
+    "dev:frontend": "pnpm --filter @hr-onboarding/frontend dev",
     "dev:ai": "cd web/ai-service && uvicorn app.main:app --reload --port 8100",
     "dev": "concurrently -k -n backend,ai,frontend -c blue,magenta,green \"pnpm dev:backend\" \"pnpm dev:ai\" \"pnpm dev:frontend\"",
     "stack": "pnpm infra:up && concurrently -k -n backend,ai,frontend -c blue,magenta,green \"pnpm dev:backend\" \"pnpm dev:ai\" \"pnpm dev:frontend\"",
-    "shared:build": "pnpm --filter @optiagent/shared build",
+    "shared:build": "pnpm --filter @hr-onboarding/shared build",
     "infra:up": "docker compose -f docker/docker-compose.yml up -d postgres redis chromadb",
     "infra:down": "docker compose -f docker/docker-compose.yml down"
   },

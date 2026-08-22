@@ -68,4 +68,10 @@ export const TYPES = {
   // Dashboard module
   DashboardService: Symbol.for('DashboardService'),
   DashboardController: Symbol.for('DashboardController'),
+
+  // Onboarding module
+  OnboardingTaskRepository: Symbol.for('OnboardingTaskRepository'),
+  OnboardingTaskService: Symbol.for('OnboardingTaskService'),
+  OnboardingTaskController: Symbol.for('OnboardingTaskController'),
+  OnboardingRoutesFactory: Symbol.for('OnboardingRoutesFactory'),
 } as const;

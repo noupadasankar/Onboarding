@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 // TODO: replace with useListDepartmentsQuery once departments feature is wired into this page

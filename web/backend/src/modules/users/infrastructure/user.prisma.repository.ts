@@ -5,7 +5,7 @@
 import { inject, injectable } from 'inversify';
 import { RoleName } from '@prisma/client';
 import type { User as PrismaUser, Role as PrismaRole } from '@prisma/client';
-import type { Paginated, Role } from '@optiagent/shared';
+import type { Paginated, Role } from '@hr-onboarding/shared';
 import { TYPES } from '../../../core/di/types';
 import type { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { UserEntity } from '../domain/user.entity';

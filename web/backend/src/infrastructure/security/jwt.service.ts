@@ -9,8 +9,8 @@ import type {
   AccessTokenClaims,
   RefreshTokenClaims,
   Role,
-} from '@optiagent/shared';
-import { ErrorCode } from '@optiagent/shared';
+} from '@hr-onboarding/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import { TYPES } from '../../core/di/types';
 import type { AppConfig } from '../../config/env';
 import { UnauthorizedError } from '../../core/errors/app-error';

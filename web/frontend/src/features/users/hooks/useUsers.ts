@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ALL_ROLES } from '@optiagent/shared';
-import type { Role } from '@optiagent/shared';
+import { ALL_ROLES } from '@hr-onboarding/shared';
+import type { Role } from '@hr-onboarding/shared';
 import { useListUsersQuery } from '../api/usersApi';
 
 export interface UsersFilters {

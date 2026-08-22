@@ -1,5 +1,5 @@
-import type { ApiResponse } from '@optiagent/shared';
-import { isApiFailure } from '@optiagent/shared';
+import type { ApiResponse } from '@hr-onboarding/shared';
+import { isApiFailure } from '@hr-onboarding/shared';
 import { baseApi } from '@/app/api/baseApi';
 import type { AdminSettingDTO } from '../types';
 

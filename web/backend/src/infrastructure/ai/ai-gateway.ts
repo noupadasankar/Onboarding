@@ -10,7 +10,7 @@ import { inject, injectable } from 'inversify';
 import type { AppConfig } from '../../config/env';
 import { TYPES } from '../../core/di/types';
 import { AppError } from '../../core/errors/app-error';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import type { Logger } from 'pino';
 
 export interface AiUserContext {

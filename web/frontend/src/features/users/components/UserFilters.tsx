@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { ALL_ROLES } from '@optiagent/shared';
-import type { Role } from '@optiagent/shared';
+import { ALL_ROLES } from '@hr-onboarding/shared';
+import type { Role } from '@hr-onboarding/shared';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { UsersFilters } from '../hooks/useUsers';

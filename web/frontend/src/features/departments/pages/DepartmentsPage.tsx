@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

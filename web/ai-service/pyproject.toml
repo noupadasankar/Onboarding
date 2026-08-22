@@ -1,7 +1,7 @@
 [project]
-name = "optiagent-ai-service"
+name = "hr-onboarding-ai"
 version = "0.1.0"
-description = "OptiAgent AI service — document ingestion, RAG, LangGraph agents"
+description = "HR Onboarding AI Employee — Conversational agent for new hire onboarding with document-grounded Q&A and task tracking"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.114,<0.116",
@@ -20,23 +20,21 @@ dependencies = [
     "opentelemetry-instrumentation-redis>=0.46,<1",
     "opentelemetry-instrumentation-logging>=0.46,<1",
     "prometheus-client>=0.19,<1",
-    # ── Increment 3: document ingestion ──────────────────────────────────────
+    # ── Document ingestion ──
     "python-multipart>=0.0.12,<0.1",
     "pypdf>=4.3,<5",
     "python-docx>=1.1,<2",
     "openpyxl>=3.1,<4",
     "chardet>=5.2,<6",
-    # ── Increment 4: text cleaning & chunking ────────────────────────────────
+    # ── Text cleaning & chunking ──
     "tiktoken>=0.7,<1",
-    # ── Increment 5: embeddings ───────────────────────────────────────────────
-    # openai is optional but listed here so `pip install -e .` picks it up.
-    # Remove if you only use the local provider.
+    # ── Embeddings ──
     "openai>=1.40,<2",
-    # ── Increment 6: vector database ─────────────────────────────────────────
+    # ── Vector database ──
     "chromadb==0.6.3",
-    # ── Increment 9: LangGraph multi-agent orchestration ─────────────────────
+    # ── LangGraph multi-agent orchestration ──
     "langgraph>=0.2,<1",
-    # ── Increment 10: hybrid search (BM25 + dense RRF) ───────────────────────
+    # ── Hybrid search (BM25 + dense RRF) ──
     "rank-bm25>=0.2.2",
 ]
 

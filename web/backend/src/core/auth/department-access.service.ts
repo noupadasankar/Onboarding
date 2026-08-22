@@ -17,7 +17,7 @@ import {
   departmentForRole,
   roleHasPermission,
   type DepartmentName,
-} from '@optiagent/shared';
+} from '@hr-onboarding/shared';
 
 export interface IDepartmentAccessService {
   /** The canonical department a role uploads to / administers, or null. */

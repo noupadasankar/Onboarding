@@ -5,8 +5,8 @@ import type {
   UpdateUserRequest,
   UserDTO,
   UserListQuery,
-} from '@optiagent/shared';
-import { isApiFailure } from '@optiagent/shared';
+} from '@hr-onboarding/shared';
+import { isApiFailure } from '@hr-onboarding/shared';
 import { baseApi } from '@/app/api/baseApi';
 
 function unwrap<T>(res: ApiResponse<T>): T {

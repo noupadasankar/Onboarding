@@ -5,8 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { baseApi } from '@/app/api/baseApi';
 import authReducer from '@/features/auth/redux/authSlice';
-import { Role, Permission } from '@optiagent/shared';
-import type { UserDTO } from '@optiagent/shared';
+import { Role, Permission } from '@hr-onboarding/shared';
+import type { UserDTO } from '@hr-onboarding/shared';
 import { UserTable } from './UserTable';
 
 /** Build a minimal store with a seeded auth state. */

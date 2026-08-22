@@ -6,7 +6,7 @@
  * Factory-built so the JwtService is injected (testable, no singletons).
  */
 import type { RequestHandler } from 'express';
-import { ErrorCode, permissionsForRole } from '@optiagent/shared';
+import { ErrorCode, permissionsForRole } from '@hr-onboarding/shared';
 import type { IJwtService } from '../infrastructure/security/jwt.service';
 import { UnauthorizedError } from '../core/errors/app-error';
 import { asyncHandler } from '../core/http/async-handler';

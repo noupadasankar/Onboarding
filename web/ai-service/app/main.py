@@ -69,11 +69,11 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="OptiAgent AI Service",
+        title="HR Onboarding AI Employee",
         version="0.1.0",
         description=(
-            "AI workloads for OptiAgent: document ingestion, RAG pipeline, "
-            "LangGraph agents. Receives authenticated requests from the Node gateway only."
+            "Conversational AI agent for new hire onboarding — document-grounded Q&A, "
+            "task creation and tracking, multi-turn conversations. Receives requests from the Node gateway only."
         ),
         lifespan=lifespan,
         docs_url="/docs" if settings.is_development else None,

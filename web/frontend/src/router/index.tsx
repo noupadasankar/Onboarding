@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { AppLayout } from '@/layouts/AppLayout';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
@@ -11,6 +11,7 @@ import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage';
 import { NotificationsPage } from '@/features/notifications/pages/NotificationsPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { AdminSettingsPage } from '@/features/admin-settings/pages/AdminSettingsPage';
+import { OnboardingChatPage } from '@/features/onboarding/pages/OnboardingChatPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
       {
         path: '/chat',
         element: <ProtectedRoute><ChatPage /></ProtectedRoute>,
+      },
+      {
+        path: '/onboarding',
+        element: <ProtectedRoute><OnboardingChatPage /></ProtectedRoute>,
       },
       {
         path: '/documents',

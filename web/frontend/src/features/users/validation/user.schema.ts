@@ -1,2 +1,2 @@
-export { createUserSchema, updateUserSchema } from '@optiagent/shared';
-export type { CreateUserInput, UpdateUserInput } from '@optiagent/shared';
+export { createUserSchema, updateUserSchema } from '@hr-onboarding/shared';
+export type { CreateUserInput, UpdateUserInput } from '@hr-onboarding/shared';

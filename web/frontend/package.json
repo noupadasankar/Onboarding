@@ -1,5 +1,5 @@
 {
-  "name": "@optiagent/frontend",
+  "name": "@hr-onboarding/frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,10 +15,11 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@optiagent/shared": "workspace:*",
+    "@hr-onboarding/shared": "workspace:*",
     "@reduxjs/toolkit": "^2.2.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "lucide-react": "^0.436.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

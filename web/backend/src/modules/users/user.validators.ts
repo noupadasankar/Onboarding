@@ -7,7 +7,7 @@ import {
   createUserSchema,
   updateUserSchema,
   userListQuerySchema,
-} from '@optiagent/shared';
+} from '@hr-onboarding/shared';
 
 export { createUserSchema, updateUserSchema, userListQuerySchema };
 

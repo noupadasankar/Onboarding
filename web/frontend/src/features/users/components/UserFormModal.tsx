@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ALL_ROLES } from '@optiagent/shared';
-import type { UserDTO } from '@optiagent/shared';
+import { ALL_ROLES } from '@hr-onboarding/shared';
+import type { UserDTO } from '@hr-onboarding/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

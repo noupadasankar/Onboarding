@@ -1,4 +1,4 @@
-import type { UserDTO } from '@optiagent/shared';
+import type { UserDTO } from '@hr-onboarding/shared';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { useDeactivateUserMutation } from '../api/usersApi';

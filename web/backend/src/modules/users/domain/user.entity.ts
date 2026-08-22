@@ -2,8 +2,8 @@
  * User domain entity — framework-free. Repositories map persistence rows to this
  * shape; services and controllers work only with it (never with Prisma models).
  */
-import type { AuthUser, Permission, Role, UserDTO } from '@optiagent/shared';
-import { permissionsForRole } from '@optiagent/shared';
+import type { AuthUser, Permission, Role, UserDTO } from '@hr-onboarding/shared';
+import { permissionsForRole } from '@hr-onboarding/shared';
 
 export interface UserProps {
   id: string;

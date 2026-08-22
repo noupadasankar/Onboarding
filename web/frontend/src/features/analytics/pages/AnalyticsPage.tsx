@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { ShieldCheck, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Permission } from '@optiagent/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGetAnalyticsQuery } from '../api/analyticsApi';

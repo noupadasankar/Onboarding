@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Permission } from '@optiagent/shared';
+import type { Permission } from '@hr-onboarding/shared';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { useLogoutMutation } from '../api/authApi';
 import { clearCredentials } from '../redux/authSlice';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Paginated, UserDTO } from '@optiagent/shared';
-import { Permission } from '@optiagent/shared';
+import type { Paginated, UserDTO } from '@hr-onboarding/shared';
+import { Permission } from '@hr-onboarding/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';

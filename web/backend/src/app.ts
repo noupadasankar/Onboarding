@@ -18,7 +18,7 @@ import { traceContextMiddleware } from './middleware/trace-context.middleware';
 import { createRequestLogger } from './middleware/request-logger.middleware';
 import { createErrorHandler } from './core/errors/error-handler.middleware';
 import { sendFailure } from './core/http/api-response';
-import { ErrorCode } from '@optiagent/shared';
+import { ErrorCode } from '@hr-onboarding/shared';
 import { createApiRouter } from './routes';
 import { mountSwagger } from './docs/swagger';
 

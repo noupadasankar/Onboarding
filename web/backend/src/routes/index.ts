@@ -22,6 +22,8 @@ import { createAnalyticsRoutes } from '../modules/analytics/analytics.routes';
 import { createAuditLogsRoutes } from '../modules/audit-logs/audit-logs.routes';
 import { createNotificationRoutes } from '../modules/notifications/notification.routes';
 import { createAdminSettingsRoutes } from '../modules/admin-settings/admin-settings.routes';
+import { TYPES } from '../core/di/types';
+import type { OnboardingRoutesFactory } from '../modules/onboarding/application/onboarding.container';
 
 export function createApiRouter(container: Container): Router {
   const router = Router();
@@ -66,6 +68,7 @@ export function createApiRouter(container: Container): Router {
   router.use('/audit-logs', authenticate, createAuditLogsRoutes(container, authenticate));
   router.use('/notifications', authenticate, createNotificationRoutes(container, authenticate));
   router.use('/admin/settings', authenticate, writeMethods, createAdminSettingsRoutes(container, authenticate));
+  router.use('/onboarding', authenticate, writeMethods, container.get<OnboardingRoutesFactory>(TYPES.OnboardingRoutesFactory)(container, authenticate));
 
   return router;
 }

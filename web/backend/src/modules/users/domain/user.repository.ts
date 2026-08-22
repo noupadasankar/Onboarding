@@ -3,8 +3,8 @@
  * implementation is an infrastructure detail bound via DI. This is what makes the
  * data layer swappable and the services unit-testable with a mock.
  */
-import type { Role } from '@optiagent/shared';
-import type { Paginated } from '@optiagent/shared';
+import type { Role } from '@hr-onboarding/shared';
+import type { Paginated } from '@hr-onboarding/shared';
 import type { UserEntity } from './user.entity';
 
 export interface CreateUserData {

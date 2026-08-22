@@ -29,6 +29,9 @@ importers:
 
   web/backend:
     dependencies:
+      '@hr-onboarding/shared':
+        specifier: workspace:*
+        version: link:../../shared
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.1
@@ -71,9 +74,6 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.26.0
         version: 1.43.0
-      '@optiagent/shared':
-        specifier: workspace:*
-        version: link:../../shared
       '@prisma/client':
         specifier: ^5.19.1
         version: 5.22.0(prisma@5.22.0)
@@ -180,7 +180,7 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.9.0
         version: 3.10.0(react-hook-form@7.81.0)
-      '@optiagent/shared':
+      '@hr-onboarding/shared':
         specifier: workspace:*
         version: link:../../shared
       '@reduxjs/toolkit':
@@ -192,6 +192,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      date-fns:
+        specifier: ^4.4.0
+        version: 4.4.0
       lucide-react:
         specifier: ^0.436.0
         version: 0.436.0(react@19.2.7)
@@ -4094,6 +4097,10 @@ packages:
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
     dev: true
+
+  /date-fns@4.4.0:
+    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
+    dev: false
 
   /dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}

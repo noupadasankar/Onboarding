@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
-import { ALL_PERMISSIONS, ALL_ROLES, permissionsForRole } from '@optiagent/shared';
-import type { Permission, RoleDTO } from '@optiagent/shared';
+import { ALL_PERMISSIONS, ALL_ROLES, permissionsForRole } from '@hr-onboarding/shared';
+import type { Permission, RoleDTO } from '@hr-onboarding/shared';
 
 export interface IRoleCatalogService {
   getRoles(): RoleDTO[];
