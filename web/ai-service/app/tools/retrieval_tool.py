@@ -29,6 +29,10 @@ class RetrievalTool:
     def __init__(self, vector_service: VectorService) -> None:
         self._vs = vector_service
 
+    @property
+    def vector_service(self) -> VectorService:
+        return self._vs
+
     async def run(
         self,
         query: str,
