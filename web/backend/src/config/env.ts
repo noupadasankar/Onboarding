@@ -32,7 +32,7 @@ const envSchema = z.object({
 
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
-  LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
+  LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(50),
   LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(900),
 
   AI_SERVICE_URL: z.string().url().default('http://localhost:8100'),

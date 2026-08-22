@@ -85,17 +85,19 @@ export class RateLimiter {
             : options.windowSeconds;
 
           res.setHeader('Retry-After', retryAfter);
-          throw new AppError(
+          return next(new AppError(
             'Rate limit exceeded. Please slow down.',
             429,
             ErrorCode.RATE_LIMITED,
             { details: { retryAfter: [retryAfter.toString()] } },
-          );
+          ));
         }
 
         next();
       } catch (err) {
-        if (err instanceof AppError) throw err;
+        if (err instanceof AppError) {
+          return next(err);
+        }
         // On Redis errors, fail open but log
         console.error('Rate limiter error:', err);
         next();
