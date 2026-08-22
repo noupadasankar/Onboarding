@@ -131,8 +131,6 @@ class VectorService:
             sf.by_department(department)
         if document_id:
             sf.by_document(document_id)
-        # Never retrieve superseded versions.
-        sf.only_latest()
         where = sf.build()
         return self._repo.search(query_embedding, n_results=n_results, where=where)
 

@@ -46,7 +46,12 @@ async def onboarding_agent_node(
 
     settings = get_settings()
     vector_service = retrieval_tool.vector_service
-    retrieval_svc = RetrievalService(vector_service=vector_service)
+    from app.embeddings.embedding_pipeline import EmbeddingPipeline
+    from app.embeddings.providers.local_provider import LocalProvider
+    from app.embeddings.embedding_service import EmbeddingConfig
+
+    emb_pipeline = EmbeddingPipeline(provider=LocalProvider(), config=EmbeddingConfig())
+    retrieval_svc = RetrievalService(vector_service=vector_service, embedding_pipeline=emb_pipeline)
     pipeline = RetrievalPipeline(service=retrieval_svc)
     task_tool = TaskTool()
 
@@ -251,7 +256,7 @@ Output JSON ONLY with this structure:
     retrieval_cfg = RetrievalConfig(
         top_k_search=15,
         top_k_rerank=5,
-        min_score=0.25,
+        min_score=0.0,
         department=None,
         document_id=None,
     )

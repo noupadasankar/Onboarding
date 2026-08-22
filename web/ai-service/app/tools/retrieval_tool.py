@@ -64,7 +64,12 @@ class RetrievalTool:
             document_id=document_id,
             section=section,
         )
-        svc = RetrievalService(vector_service=self._vs)
+        from app.embeddings.embedding_pipeline import EmbeddingPipeline
+        from app.embeddings.providers.local_provider import LocalProvider
+        from app.embeddings.embedding_service import EmbeddingConfig
+
+        emb = EmbeddingPipeline(provider=LocalProvider(), config=EmbeddingConfig())
+        svc = RetrievalService(vector_service=self._vs, embedding_pipeline=emb)
         pipeline = RetrievalPipeline(service=svc)
 
         _log.info("retrieval_tool_run", query=query[:80], top_k=top_k)
