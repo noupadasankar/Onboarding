@@ -1,0 +1,63 @@
+$kind: http-example
+request:
+  url: https://api.getpostman.com/collections
+  method: POST
+  headers:
+    Content-Type: application/json
+  queryParams:
+    - key: workspace
+      value: 1f0df51a-8658-4ee8-a2a1-d2567dfa09a9
+      disabled: true
+      description: |-
+        Optional. A workspace ID in which to create the collection.
+
+        If you do not include this query parameter, the system creates the collection in your "My Workspace" workspace.
+  body:
+    type: json
+    content: |-
+      {
+          "collection": {
+              "item": [
+                  {
+                      "name": "Test GET Response",
+                      "event": [
+                          {
+                              "listen": "test",
+                              "script": {
+                                  "id": "7d2334fc-a84a-4c3d-b26c-7529afa4c0ae",
+                                  "exec": [
+                                      "pm.test(\"Status code is 200\", function () {",
+                                      "    pm.response.to.have.status(200);",
+                                      "});"
+                                      ],
+                                  "type": "text/javascript"
+                                  }
+                              }
+                          ],
+                      "request": {
+                          "url": "https://echo.getpostman.com/headers",
+                          "method": "GET",
+                          "header": [
+                              {
+                                  "key": "Content-Type",
+                                  "value": "application/json"
+                              }
+                          ]
+                      }
+                  }
+              ]
+          }
+      }
+response:
+  statusCode: 429
+  statusText: Too Many Requests
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+          "error": "rateLimited",
+          "message": "Rate limit exceeded. Please retry after 1669048687"
+      }
+order: 4000

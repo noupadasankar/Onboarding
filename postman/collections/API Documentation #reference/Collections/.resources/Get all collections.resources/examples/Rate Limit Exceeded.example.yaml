@@ -1,0 +1,22 @@
+$kind: http-example
+request:
+  url: https://api.getpostman.com/collections
+  method: GET
+  queryParams:
+    - key: workspace
+      value: 1f0df51a-8658-4ee8-a2a1-d2567dfa09a9
+      disabled: true
+      description: Optional. A workspace ID.
+response:
+  statusCode: 429
+  statusText: Too Many Requests
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+          "error": "rateLimited",
+          "message": "Rate limit exceeded. Please retry after 1669048687"
+      }
+order: 3000

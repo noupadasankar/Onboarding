@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Audit Logs
+method: GET
+url: '{{backendUrl}}/api/v1/audit-logs'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

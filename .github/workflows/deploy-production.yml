@@ -1,0 +1,349 @@
+name: Deploy to Production (Blue/Green)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Docker image tag to deploy (e.g., sha-abc123 or v1.2.3)'
+        required: true
+        type: string
+      target-slot:
+        description: 'Target deployment slot'
+        required: true
+        type: choice
+        options: [green, blue]
+        default: 'green'
+      skip-smoke-tests:
+        description: 'Skip post-deployment smoke tests'
+        required: false
+        type: boolean
+        default: false
+      auto-promote:
+        description: 'Automatically promote after validation'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    outputs:
+      target-slot: ${{ steps.validate.outputs.target-slot }}
+      inactive-slot: ${{ steps.validate.outputs.inactive-slot }}
+    steps:
+      - name: Validate inputs
+        id: validate
+        run: |
+          TARGET="${{ github.event.inputs.target-slot }}"
+          if [ "$TARGET" = "green" ]; then
+            echo "target-slot=green" >> $GITHUB_OUTPUT
+            echo "inactive-slot=blue" >> $GITHUB_OUTPUT
+          elif [ "$TARGET" = "blue" ]; then
+            echo "target-slot=blue" >> $GITHUB_OUTPUT
+            echo "inactive-slot=green" >> $GITHUB_OUTPUT
+          else
+            echo "Invalid target slot: $TARGET"
+            exit 1
+          fi
+          echo "Image tag: ${{ github.event.inputs.image-tag }}"
+          echo "Target slot: $TARGET"
+          echo "Inactive slot: ${{ steps.validate.outputs.inactive-slot }}"
+
+  deploy-inactive-slot:
+    name: Deploy to Inactive Slot (${{ needs.validate.outputs.target-slot }})
+    runs-on: ubuntu-latest
+    needs: validate-inputs
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.PRODUCTION_KUBECONFIG }}
+
+      - name: Verify cluster access
+        run: |
+          kubectl version --client
+          kubectl get nodes -o wide
+
+      - name: Deploy backend to ${{ needs.validate.outputs.target-slot }}
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image-tag }}"
+          SLOT="${{ needs.validate.outputs.target-slot }}"
+          
+          echo "Deploying backend:$IMAGE_TAG to $SLOT slot..."
+          
+          # Update the green/blue deployment image
+          kubectl set image deployment/backend-$SLOT \
+            backend=ghcr.io/${{ github.repository }}/backend:$IMAGE_TAG \
+            -n optiagent-prod
+          
+          # Wait for rollout
+          kubectl rollout status deployment/backend-$SLOT -n optiagent-prod --timeout=300s
+          
+          echo "✅ Backend $SLOT deployment complete"
+
+      - name: Deploy frontend to ${{ needs.validate.outputs.target-slot }}
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image-tag }}"
+          SLOT="${{ needs.validate.outputs.target-slot }}"
+          
+          echo "Deploying frontend:$IMAGE_TAG to $SLOT slot..."
+          
+          kubectl set image deployment/frontend-$SLOT \
+            frontend=ghcr.io/${{ github.repository }}/frontend:$IMAGE_TAG \
+            -n optiagent-prod
+          
+          kubectl rollout status deployment/frontend-$SLOT -n optiagent-prod --timeout=180s
+          
+          echo "✅ Frontend $SLOT deployment complete"
+
+      - name: Run database migrations
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image-tag }}"
+          
+          echo "Running production database migrations..."
+          kubectl run migrate-$(date +%s) \
+            --image=ghcr.io/${{ github.repository }}/backend:$IMAGE_TAG \
+            --restart=Never \
+            --rm -i \
+            --namespace=optiagent-prod \
+            --env=DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+            --env=REDIS_URL="${{ secrets.PRODUCTION_REDIS_URL }}" \
+            --env=NODE_ENV=production \
+            --env=JWT_PRIVATE_KEY_PATH=/app/backend/secrets/jwt-private.pem \
+            --env=JWT_PUBLIC_KEY_PATH=/app/backend/secrets/jwt-public.pem \
+            --overrides='{"spec":{"serviceAccountName":"optiagent-backend"}}' \
+            -- node scripts/migrate-production.mjs
+
+      - name: Wait for pods to be ready
+        run: |
+          SLOT="${{ needs.validate.outputs.target-slot }}"
+          echo "Waiting for $SLOT pods to be ready..."
+          
+          kubectl wait --for=condition=ready pod \
+            -l app=backend,deployment-slot=$SLOT \
+            -n optiagent-prod --timeout=120s
+          
+          kubectl wait --for=condition=ready pod \
+            -l app=frontend,deployment-slot=$SLOT \
+            -n optiagent-prod --timeout=120s
+
+  validate-deployment:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, deploy-inactive-slot]
+    timeout-minutes: 10
+    steps:
+      - name: Run smoke tests against ${{ needs.validate-inputs.outputs.target-slot }} slot
+        if: ${{ !inputs.skip-smoke-tests }}
+        run: |
+          SLOT="${{ needs.validate-inputs.outputs.target-slot }}"
+          PROD_URL="https://optiagent.example.com"
+          
+          echo "Running smoke tests against $SLOT slot..."
+          
+          # Test backend health (via ingress with slot-specific header or direct port-forward)
+          # For blue/green, we test via a temporary port-forward to the new slot
+          kubectl port-forward -n optiagent-prod svc/backend-$SLOT 8000:8000 &
+          PF_PID=$!
+          sleep 5
+          
+          # Health checks
+          echo "→ Testing /health/live..."
+          curl -sf http://localhost:8000/health/live | jq -e '.status == "alive"'
+          
+          echo "→ Testing /health/ready..."
+          curl -sf http://localhost:8000/health/ready | jq -e '.status == "ready"'
+          
+          echo "→ Testing API version..."
+          curl -sf http://localhost:8000/api/version | jq -e '.version'
+          
+          # Test auth endpoint
+          echo "→ Testing auth endpoint..."
+          curl -sf -X POST http://localhost:8000/api/auth/refresh \
+            -H "Content-Type: application/json" \
+            -d '{"refreshToken":"invalid"}' | jq -e '.error.code == "UNAUTHORIZED"'
+          
+          kill $PF_PID
+          
+          # Test frontend
+          echo "→ Testing frontend..."
+          curl -sf "$PROD_URL/" | grep -q "OptiAgent" || exit 1
+          
+          echo "✅ All smoke tests passed!"
+
+      - name: Validate metrics endpoint
+        run: |
+          SLOT="${{ needs.validate-inputs.outputs.target-slot }}"
+          kubectl port-forward -n optiagent-prod svc/backend-$SLOT 8000:8000 &
+          PF_PID=$!
+          sleep 3
+          
+          echo "→ Checking Prometheus metrics..."
+          curl -sf http://localhost:8000/metrics | grep -q "http_requests_total" || exit 1
+          
+          kill $PF_PID
+          echo "✅ Metrics endpoint validated"
+
+  promote-to-active:
+    name: Promote to Active (Blue/Green Switch)
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, validate-deployment]
+    if: ${{ inputs.auto-promote == 'true' || github.event.inputs.auto-promote == 'true' }}
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.PRODUCTION_KUBECONFIG }}
+
+      - name: Switch traffic to ${{ needs.validate-inputs.outputs.target-slot }} slot
+        run: |
+          TARGET_SLOT="${{ needs.validate-inputs.outputs.target-slot }}"
+          INACTIVE_SLOT="${{ needs.validate-inputs.outputs.inactive-slot }}"
+          
+          echo "🔄 Switching production traffic from $INACTIVE_SLOT to $TARGET_SLOT..."
+          
+          # Update service selectors to point to new slot
+          # Method 1: Patch the main service to select the new slot
+          kubectl patch service backend -n optiagent-prod \
+            -p '{"spec":{"selector":{"app":"backend","deployment-slot":"'$TARGET_SLOT'"}}}'
+          
+          kubectl patch service frontend -n optiagent-prod \
+            -p '{"spec":{"selector":{"app":"frontend","deployment-slot":"'$TARGET_SLOT'"}}}'
+          
+          # Method 2 (Alternative): Update ingress annotations for canary routing
+          # kubectl annotate ingress optiagent-ingress -n optiagent-prod \
+          #   nginx.ingress.kubernetes.io/canary-by-header="X-Canary" \
+          #   nginx.ingress.kubernetes.io/canary-by-header-value="$TARGET_SLOT" \
+          #   --overwrite
+          
+          echo "✅ Traffic switched to $TARGET_SLOT slot"
+
+      - name: Verify traffic switch
+        run: |
+          TARGET_SLOT="${{ needs.validate-inputs.outputs.target-slot }}"
+          
+          echo "Verifying traffic is routed to $TARGET_SLOT..."
+          sleep 10
+          
+          # Check that the service endpoints match the target slot
+          kubectl get endpoints backend -n optiagent-prod -o jsonpath='{.subsets[*].addresses[*].targetRef.labels.deployment-slot}'
+          
+          # Quick health check through production URL
+          curl -sf https://optiagent.example.com/health/ready | jq -e '.status == "ready"'
+          
+          echo "✅ Traffic successfully switched to $TARGET_SLOT"
+
+      - name: Scale down inactive slot
+        run: |
+          INACTIVE_SLOT="${{ needs.validate-inputs.outputs.inactive-slot }}"
+          
+          echo "Scaling down $INACTIVE_SLOT slot..."
+          kubectl scale deployment backend-$INACTIVE_SLOT --replicas=0 -n optiagent-prod
+          kubectl scale deployment frontend-$INACTIVE_SLOT --replicas=0 -n optiagent-prod
+          
+          echo "✅ $INACTIVE_SLOT slot scaled down"
+
+      - name: Post-promotion notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Production deployment promoted",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Promoted*\nSlot: `${{ needs.validate-inputs.outputs.target-slot }}`\nImage: `${{ github.event.inputs.image-tag }}`\nCommit: `${{ github.sha }}`\nDeployed by: `${{ github.actor }}`\nRun: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, deploy-inactive-slot, validate-deployment]
+    if: failure()
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.PRODUCTION_KUBECONFIG }}
+
+      - name: Rollback - Scale down failed slot
+        run: |
+          TARGET_SLOT="${{ needs.validate-inputs.outputs.target-slot }}"
+          
+          echo "❌ Deployment validation failed. Rolling back $TARGET_SLOT..."
+          kubectl scale deployment backend-$TARGET_SLOT --replicas=0 -n optiagent-prod
+          kubectl scale deployment frontend-$TARGET_SLOT --replicas=0 -n optiagent-prod
+          
+          echo "✅ Failed slot scaled down. Active slot unchanged."
+
+      - name: Rollback notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ Production deployment FAILED - Rolled back",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Failed & Rolled Back*\nSlot: `${{ needs.validate-inputs.outputs.target-slot }}`\nImage: `${{ github.event.inputs.image-tag }}`\nCommit: `${{ github.sha }}`\nRun: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  manual-promotion:
+    name: Manual Promotion (Approval)
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, validate-deployment]
+    if: ${{ inputs.auto-promote != 'true' && github.event.inputs.auto-promote != 'true' }}
+    environment: production
+    steps:
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: ${{ secrets.PRODUCTION_APPROVERS }}
+          minimum-approvals: 1
+          issue-title: "Promote ${{ needs.validate-inputs.outputs.target-slot }} to production?"
+          issue-body: |
+            Deployment validation passed for slot `${{ needs.validate-inputs.outputs.target-slot }}`.
+            
+            Image: `${{ github.event.inputs.image-tag }}`
+            Commit: `${{ github.sha }}`
+            
+            Approve to switch production traffic to this slot.
+
+      - name: Trigger promotion workflow
+        run: |
+          echo "Manual approval received. Triggering promotion..."
+          # This would call a separate workflow or use the GitHub API to trigger the promote job
+          # For simplicity, we'll note that promotion should be done manually via:
+          echo "Run: gh workflow run promote-production.yml -f target-slot=${{ needs.validate-inputs.outputs.target-slot }}"

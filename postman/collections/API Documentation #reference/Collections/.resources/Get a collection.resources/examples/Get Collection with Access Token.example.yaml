@@ -1,0 +1,62 @@
+$kind: http-example
+request:
+  url: https://api.getpostman.com/collections/12ece9e1-2abf-4edc-8e34-de66e74114d2?access_key={{accessKey}}
+  method: GET
+  queryParams:
+    access_key: "{{accessKey}}"
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+          "collection": {
+              "info": {
+                  "name": "Test Collection",
+                  "description": "This is a test collection that makes a tiny request to Postman Echo service to get the list of request headers sent by a HTTP client.",
+                  "_postman_id": "12ece9e1-2abf-4edc-8e34-de66e74114d2",
+                  "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+                  "updatedAt": "2022-06-16T20:21:13.000Z",
+                  "fork": {
+                      "label": "Test Fork",
+                      "createdAt": "2022-06-16T19:51:44.069Z",
+                      "from": "12345678-12ece9e1-2abf-4edc-8e34-de66e74114d2"
+                  }
+              },
+              "item": [
+                  {
+                      "name": "Test GET Response",
+                      "id": "82ee981b-e19f-962a-401e-ea34ebfb4848",
+                      "event": [
+                          {
+                              "listen": "test",
+                              "script": {
+                                  "id": "7d2334fc-a84a-4c3d-b26c-7529afa4c0ae",
+                                  "exec": [
+                                      "pm.test(\"Status code is 200\", function () {",
+                                      "    pm.response.to.have.status(200);",
+                                      "});"
+                                  ],
+                                  "type": "text/javascript"
+                              }
+                          }
+                      ],
+                      "request": {
+                          "url": "https://echo.getpostman.com/headers",
+                          "method": "GET",
+                          "header": [
+                              {
+                                  "key": "Content-Type",
+                                  "value": "application/json"
+                              }
+                          ]
+                      },
+                      "response": []
+                  }
+              ]
+          }
+      }
+order: 2000

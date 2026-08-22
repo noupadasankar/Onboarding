@@ -17,9 +17,9 @@ export function ConversationSidebar({
   isLoading,
 }: ConversationSidebarProps) {
   return (
-    <div className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-slate-50">
+    <div className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-slate-50" data-testid="conversation-sidebar">
       <div className="p-3">
-        <Button className="w-full" onClick={onNew}>
+        <Button className="w-full" onClick={onNew} data-testid="new-conversation">
           New conversation
         </Button>
       </div>

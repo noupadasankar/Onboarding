@@ -89,7 +89,9 @@ node scripts/generate-keys.mjs
 
 pnpm install
 pnpm prisma:migrate dev   # create schema + run migrations
-pnpm prisma:seed          # insert demo users, roles, departments
+pnpm prisma:seed
+pnpm prisma:migrate dev
+          # insert demo users, roles, departments
 pnpm dev                  # http://localhost:8000  ·  Swagger: /api/docs
 ```
 

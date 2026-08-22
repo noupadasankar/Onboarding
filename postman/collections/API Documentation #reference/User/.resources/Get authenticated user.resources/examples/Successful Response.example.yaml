@@ -1,0 +1,67 @@
+$kind: http-example
+request:
+  url: https://api.getpostman.com/me
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+          "user": {
+              "id": 12345678,
+              "username": "taylor-lee",
+              "email": "taylor.lee@example.com",
+              "fullName": "Taylor Lee",
+              "avatar": "https://example.com/user/r5u9qpvmujfjf6lbqmga.jpg",
+              "isPublic": true
+          },
+          "operations": [
+              {
+                  "name": "mock_usage",
+                  "limit": 1000000,
+                  "usage": 110276,
+                  "overage": 0
+              },
+              {
+                  "name": "monitor_request_runs",
+                  "limit": 10000000,
+                  "usage": 1141750,
+                  "overage": 0
+              },
+              {
+                  "name": "api_usage",
+                  "limit": 1000000,
+                  "usage": 16240,
+                  "overage": 0
+              },
+              {
+                  "name": "custom_domains",
+                  "limit": 25,
+                  "usage": 25,
+                  "overage": 0
+              },
+              {
+                  "name": "serverless_requests",
+                  "limit": 10000,
+                  "usage": 0,
+                  "overage": 0
+              },
+              {
+                  "name": "integrations",
+                  "limit": 5000,
+                  "usage": 1018,
+                  "overage": 0
+              },
+              {
+                  "name": "cloud_agent_requests",
+                  "limit": 1000000,
+                  "usage": 1615,
+                  "overage": 0
+              }
+          ]
+      }
+order: 1000

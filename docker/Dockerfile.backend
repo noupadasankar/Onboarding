@@ -1,0 +1,53 @@
+# Multi-stage Dockerfile for the backend API
+# Build context: repository root (to access shared workspace package)
+
+# --- Base ---
+FROM node:20-alpine AS base
+RUN npm install -g pnpm@8.15.9
+WORKDIR /app
+
+# --- Dependencies ---
+FROM base AS deps
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+RUN pnpm install --filter @optiagent/backend... --frozen-lockfile || pnpm install --filter @optiagent/backend...
+
+# --- Build ---
+FROM deps AS build
+COPY tsconfig.base.json ./
+COPY shared ./shared
+COPY backend ./backend
+RUN pnpm --filter @optiagent/shared build \
+ && pnpm --filter @optiagent/backend prisma:generate \
+ && pnpm --filter @optiagent/backend build
+
+# --- Runtime ---
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app/backend
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 -G nodejs
+
+# Copy built artifacts and dependencies
+COPY --from=build --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=build --chown=nodejs:nodejs /app/shared/dist ./shared/dist
+COPY --from=build --chown=nodejs:nodejs /app/shared/package.json ./shared/
+COPY --from=build --chown=nodejs:nodejs /app/backend/dist ./dist
+COPY --from=build --chown=nodejs:nodejs /app/backend/node_modules ./node_modules
+COPY --from=build --chown=nodejs:nodejs /app/backend/prisma ./prisma
+COPY --from=build --chown=nodejs:nodejs /app/backend/package.json ./
+
+# Secrets directory (mounted at runtime)
+RUN mkdir -p /app/backend/secrets && chown nodejs:nodejs /app/backend/secrets
+
+USER nodejs
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:8000/health || exit 1
+
+CMD ["node", "dist/main.js"]

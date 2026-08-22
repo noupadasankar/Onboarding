@@ -38,7 +38,7 @@ export function LoginForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" autoComplete="username" {...register('email')} />
+        <Input id="email" type="email" autoComplete="username" data-testid="email-input" {...register('email')} />
         {errors.email && (
           <p role="alert" className="text-sm text-red-600">
             {errors.email.message}
@@ -52,6 +52,7 @@ export function LoginForm() {
           id="password"
           type="password"
           autoComplete="current-password"
+          data-testid="password-input"
           {...register('password')}
         />
         {errors.password && (
@@ -62,12 +63,12 @@ export function LoginForm() {
       </div>
 
       {serverError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-red-600" data-testid="login-error">
           {serverError}
         </p>
       )}
 
-      <Button type="submit" disabled={isLoading}>
+      <Button type="submit" disabled={isLoading} data-testid="login-submit">
         {isLoading ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>

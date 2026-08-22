@@ -9,6 +9,15 @@ Requires-Dist: pydantic<3,>=2.8
 Requires-Dist: pydantic-settings<3,>=2.4
 Requires-Dist: python-dotenv<2,>=1.0
 Requires-Dist: structlog<26,>=24.4
+Requires-Dist: opentelemetry-api<2,>=1.25
+Requires-Dist: opentelemetry-sdk<2,>=1.25
+Requires-Dist: opentelemetry-exporter-otlp<2,>=1.25
+Requires-Dist: opentelemetry-instrumentation-fastapi<1,>=0.46
+Requires-Dist: opentelemetry-instrumentation-httpx<1,>=0.46
+Requires-Dist: opentelemetry-instrumentation-sqlalchemy<1,>=0.46
+Requires-Dist: opentelemetry-instrumentation-redis<1,>=0.46
+Requires-Dist: opentelemetry-instrumentation-logging<1,>=0.46
+Requires-Dist: prometheus-client<1,>=0.19
 Requires-Dist: python-multipart<0.1,>=0.0.12
 Requires-Dist: pypdf<5,>=4.3
 Requires-Dist: python-docx<2,>=1.1
@@ -16,7 +25,8 @@ Requires-Dist: openpyxl<4,>=3.1
 Requires-Dist: chardet<6,>=5.2
 Requires-Dist: tiktoken<1,>=0.7
 Requires-Dist: openai<2,>=1.40
-Requires-Dist: chromadb<1,>=0.5
+Requires-Dist: chromadb==0.6.3
+Requires-Dist: langgraph<1,>=0.2
 Requires-Dist: rank-bm25>=0.2.2
 Provides-Extra: dev
 Requires-Dist: pytest<9,>=8.3; extra == "dev"

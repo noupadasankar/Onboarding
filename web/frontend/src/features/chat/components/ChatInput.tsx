@@ -56,11 +56,11 @@ export function ChatInput({ onSend, isLoading, departments }: ChatInputProps) {
   const canSend = question.trim().length > 0 && !isLoading;
 
   return (
-    <div className="border-t border-slate-200 bg-white p-4">
+    <div className="border-t border-slate-200 bg-white p-4" data-testid="chat-input-container">
       <div className="flex items-end gap-3">
         <div className="w-44 flex-shrink-0">
           <Select value={departmentHint} onValueChange={setDepartmentHint}>
-            <SelectTrigger className="h-9 text-sm">
+            <SelectTrigger className="h-9 text-sm" data-testid="chat-department-select">
               <SelectValue placeholder="All departments" />
             </SelectTrigger>
             <SelectContent>
@@ -81,6 +81,7 @@ export function ChatInput({ onSend, isLoading, departments }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Ask a question…"
           rows={1}
+          data-testid="chat-input"
           className="flex-1 resize-none overflow-y-auto rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           style={{ maxHeight: 120 }}
         />
@@ -89,6 +90,7 @@ export function ChatInput({ onSend, isLoading, departments }: ChatInputProps) {
           onClick={submit}
           disabled={!canSend}
           className="flex-shrink-0"
+          data-testid="chat-send"
         >
           {isLoading ? 'Thinking…' : 'Send'}
         </Button>

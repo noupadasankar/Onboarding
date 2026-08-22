@@ -1,0 +1,26 @@
+$kind: http-request
+name: List Users
+method: GET
+url: '{{backendUrl}}/api/v1/users'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+queryParams:
+  - key: search
+    value: ''
+    disabled: true
+  - key: role
+    value: ''
+    disabled: true
+  - key: isActive
+    value: ''
+    disabled: true
+  - key: page
+    value: '1'
+    disabled: true
+  - key: limit
+    value: '20'
+    disabled: true

@@ -1,0 +1,54 @@
+$kind: http-example
+request:
+  url: https://api.getpostman.com/collections
+  method: GET
+  queryParams:
+    - key: workspace
+      value: 1f0df51a-8658-4ee8-a2a1-d2567dfa09a9
+      disabled: true
+      description: Optional. A workspace ID.
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+          "collections": [
+              {
+                  "id": "dac5eac9-148d-a32e-b76b-3edee9da28f7",
+                  "name": "Cloud API",
+                  "owner": "12345678",
+                  "createdAt": "2022-04-12T10:29:46.000Z",
+                  "updatedAt": "2022-04-12T10:29:56.000Z",
+                  "uid": "12345678-dac5eac9-148d-a32e-b76b-3edee9da28f7",
+                  "isPublic": true
+              },
+              {
+                  "id": "12ece9e1-2abf-4edc-8e34-de66e74114d2",
+                  "name": "Test Collection",
+                  "owner": "12345678",
+                  "createdAt": "2022-01-13T10:21:46.000Z",
+                  "updatedAt": "2022-02-12T11:29:56.000Z",
+                  "uid": "12345678-12ece9e1-2abf-4edc-8e34-de66e74114d2",
+                  "isPublic": false,
+                  "fork": {
+                      "label": "Test Fork",
+                      "createdAt": "2022-06-16T19:51:44.069Z",
+                      "from": "12345678-12ece9e1-2abf-4edc-8e34-de66e74114d2"
+                  }
+              },
+              {
+                  "id": "f695cab7-6878-eb55-7943-ad88e1ccfd65",
+                  "name": "Postman Echo",
+                  "owner": "12345678",
+                  "createdAt": "2021-04-11T09:18:26.000Z",
+                  "updatedAt": "2022-05-01T15:29:32.000Z",
+                  "uid": "12345678-f695cab7-6878-eb55-7943-ad88e1ccfd65",
+                  "isPublic": true
+              }
+          ]
+      }
+order: 1000

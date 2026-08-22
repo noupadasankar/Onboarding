@@ -1,0 +1,6 @@
+$kind: http-request
+description: Deletes a collection.
+url: https://api.getpostman.com/collections/{{collectionId}}
+method: DELETE
+examples: ./.resources/Delete a collection.resources/examples
+order: 3000

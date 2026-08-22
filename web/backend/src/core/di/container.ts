@@ -32,7 +32,7 @@ import {
 import { LocalStorageService } from '../../infrastructure/storage/local-storage.service';
 import type { IStorageService } from '../../infrastructure/storage/storage.service';
 
-import { InMemoryIndexingQueue } from '../../infrastructure/queue/in-memory-indexing-queue';
+import { BullMQIndexingQueue } from '../../infrastructure/queue/bullmq-indexing-queue';
 import type { IIndexingQueue } from '../../infrastructure/queue/indexing-queue';
 
 import { bindAuthModule } from '../../modules/auth/auth.container';
@@ -90,7 +90,7 @@ export function buildContainer(config: AppConfig): Container {
   // --- Indexing queue (swap for Redis/BullMQ-backed impl to scale out) ---
   container
     .bind<IIndexingQueue>(TYPES.IndexingQueue)
-    .to(InMemoryIndexingQueue)
+    .to(BullMQIndexingQueue)
     .inSingletonScope();
 
   // --- Feature modules ---

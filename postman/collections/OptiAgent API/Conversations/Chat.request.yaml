@@ -1,0 +1,23 @@
+$kind: http-request
+name: Chat
+method: POST
+url: '{{backendUrl}}/api/v1/conversations/chat'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "question": "What is the leave policy?",
+      "conversationId": "{{conversationId}}",
+      "departmentHint": "hr",
+      "topK": 5,
+      "minScore": 0.5
+    }

@@ -9,7 +9,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   if (isUser) {
     return (
-      <div className="flex justify-end">
+      <div className="flex justify-end" data-testid="user-message">
         <div className="max-w-[70%] rounded-l-2xl rounded-tr-2xl bg-teal-600 px-4 py-3 text-white">
           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
         </div>
@@ -21,7 +21,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const hasStats = message.latencyMs != null || message.promptTokens != null || message.completionTokens != null;
 
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start" data-testid="assistant-message">
       <div className="max-w-[70%]">
         <div className="rounded-r-2xl rounded-tl-2xl border border-slate-200 bg-white px-4 py-3">
           <p className="whitespace-pre-wrap text-sm text-slate-800">{message.content}</p>

@@ -1,0 +1,11 @@
+$kind: http-request
+description: Gets all of your [collections](https://www.getpostman.com/docs/collections). The response includes all of your subscribed collections.
+url: https://api.getpostman.com/collections
+method: GET
+queryParams:
+  - key: workspace
+    value: "{{workspaceId}}"
+    disabled: true
+    description: Optional. A workspace ID.
+examples: ./.resources/Get all collections.resources/examples
+order: 5000

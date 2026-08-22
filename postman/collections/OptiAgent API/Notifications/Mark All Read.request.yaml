@@ -1,0 +1,10 @@
+$kind: http-request
+name: Mark All Read
+method: PATCH
+url: '{{backendUrl}}/api/v1/notifications/read-all'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

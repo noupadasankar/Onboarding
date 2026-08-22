@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Permissions
+method: GET
+url: '{{backendUrl}}/api/v1/permissions'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

@@ -1,0 +1,10 @@
+$kind: http-request
+name: Get My Profile
+method: GET
+url: '{{backendUrl}}/api/v1/users/me'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

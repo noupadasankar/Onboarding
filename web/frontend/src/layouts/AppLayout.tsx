@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useListNotificationsQuery } from '@/features/notifications/api/notificationsApi';
 import { cn } from '@/lib/utils';
+import { FeatureErrorBoundary } from '@/shared/components/FeatureErrorBoundary';
 
 export function AppLayout() {
   const { user } = useAuth();
@@ -21,9 +22,8 @@ export function AppLayout() {
       <Sidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* ── Top Navigation Bar ── */}
+        {/* Top Navigation Bar */}
         <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-
           {/* Search */}
           <div className={cn(
             'flex items-center gap-2 rounded-lg border bg-slate-50 px-3 py-2 w-80 transition-all',
@@ -78,9 +78,11 @@ export function AppLayout() {
           </div>
         </header>
 
-        {/* ── Page content ── */}
+        {/* Page content - wrapped in feature error boundary */}
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <FeatureErrorBoundary featureName="Page content">
+            <Outlet />
+          </FeatureErrorBoundary>
         </main>
       </div>
     </div>

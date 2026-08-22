@@ -1,0 +1,19 @@
+$kind: http-request
+name: Search
+method: POST
+url: '{{aiServiceUrl}}/api/v1/search'
+order: 1000
+headers:
+  - key: X-Internal-Token
+    value: '{{internalToken}}'
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "What is the leave policy?",
+      "top_k": 5,
+      "min_score": 0.5,
+      "use_hybrid": true
+    }

@@ -46,13 +46,24 @@ export class InMemoryIndexingQueue implements IIndexingQueue {
     this.handler = handler;
   }
 
-  enqueue(job: IndexingJob): void {
+  async enqueue(job: IndexingJob): Promise<void> {
     this.waiting.push({ job, attempt: 1 });
     this.pump();
   }
 
-  size(): number {
+  async size(): Promise<number> {
     return this.active + this.waiting.length;
+  }
+
+  async shutdown(): Promise<void> {
+    // Wait for active jobs to complete (with timeout)
+    const timeoutMs = 30000;
+    const start = Date.now();
+    while (this.active > 0 && Date.now() - start < timeoutMs) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    this.waiting.length = 0;
+    this.active = 0;
   }
 
   /** Start as many jobs as free concurrency slots allow. */

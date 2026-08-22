@@ -3,14 +3,14 @@
  * (authenticate, login rate limiter) once, then mounts each feature router under
  * the versioned prefix.
  */
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import type { Container } from 'inversify';
 import { TYPES } from '../core/di/types';
 import type { AppConfig } from '../config/env';
 import type { IJwtService } from '../infrastructure/security/jwt.service';
 import type { RedisService } from '../infrastructure/cache/redis.service';
 import { createAuthenticate } from '../middleware/authenticate.middleware';
-import { createRateLimiter } from '../middleware/rate-limit.middleware';
+import { createRateLimiter, userKeyFn } from '../middleware/rate-limit.middleware';
 import { createAuthRoutes } from '../modules/auth/auth.routes';
 import { createUserRoutes } from '../modules/users/user.routes';
 import { createRolesRoutes } from '../modules/roles/roles.routes';
@@ -31,23 +31,41 @@ export function createApiRouter(container: Container): Router {
   const redis = container.get<RedisService>(TYPES.RedisService);
 
   const authenticate = createAuthenticate(jwtService);
+
+  // Login rate limiter (IP-based)
   const loginRateLimiter = createRateLimiter(redis, {
     bucket: 'login',
     max: config.loginRateLimit.max,
     windowSeconds: config.loginRateLimit.windowSeconds,
   });
 
+  // General write rate limiter (per-user, stricter)
+  const writeRateLimiter = createRateLimiter(redis, {
+    bucket: 'write',
+    max: 60, // 60 writes per minute per user
+    windowSeconds: 60,
+    keyFn: userKeyFn,
+  });
+
+  // Apply write rate limiter to all mutating methods
+  const writeMethods: RequestHandler = (req, res, next) => {
+    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method)) {
+      return writeRateLimiter(req, res, next);
+    }
+    next();
+  };
+
   router.use('/auth', createAuthRoutes(container, { authenticate, loginRateLimiter }));
-  router.use('/users', createUserRoutes(container, authenticate));
-  router.use('/', createRolesRoutes(container, authenticate));
-  router.use('/departments', createDepartmentRoutes(container, authenticate));
-  router.use('/documents', createDocumentRoutes(container, authenticate));
-  router.use('/conversations', createConversationRoutes(container, authenticate));
-  router.use('/dashboard', createDashboardRoutes(container, authenticate));
-  router.use('/analytics', createAnalyticsRoutes(container, authenticate));
-  router.use('/audit-logs', createAuditLogsRoutes(container, authenticate));
-  router.use('/notifications', createNotificationRoutes(container, authenticate));
-  router.use('/admin/settings', createAdminSettingsRoutes(container, authenticate));
+  router.use('/users', authenticate, writeMethods, createUserRoutes(container, authenticate));
+  router.use('/', authenticate, writeMethods, createRolesRoutes(container, authenticate));
+  router.use('/departments', authenticate, writeMethods, createDepartmentRoutes(container, authenticate));
+  router.use('/documents', authenticate, writeMethods, createDocumentRoutes(container, authenticate));
+  router.use('/conversations', authenticate, writeMethods, createConversationRoutes(container, authenticate));
+  router.use('/dashboard', authenticate, createDashboardRoutes(container, authenticate));
+  router.use('/analytics', authenticate, createAnalyticsRoutes(container, authenticate));
+  router.use('/audit-logs', authenticate, createAuditLogsRoutes(container, authenticate));
+  router.use('/notifications', authenticate, createNotificationRoutes(container, authenticate));
+  router.use('/admin/settings', authenticate, writeMethods, createAdminSettingsRoutes(container, authenticate));
 
   return router;
 }

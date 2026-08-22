@@ -10,6 +10,7 @@ Responsibilities:
   - Register exception handlers
   - Mount routers
 """
+import os
 import time
 from uuid import uuid4
 
@@ -25,6 +26,12 @@ from app.core.constants import API_V1_PREFIX, HEADER_REQUEST_ID, HEADER_USER_ID
 from app.core.exceptions import register_exception_handlers
 from app.core.lifespan import lifespan
 from app.core.logging import get_logger
+from app.instrumentation import init_telemetry
+
+
+# Initialize OpenTelemetry early, before creating the FastAPI app
+if os.getenv("OTEL_ENABLED", "true").lower() != "false":
+    init_telemetry()
 
 
 class _RequestMiddleware(BaseHTTPMiddleware):

@@ -17,14 +17,16 @@ export class RedisService {
     @inject(TYPES.Logger) private readonly logger: Logger,
   ) {
     this.client = new Redis(config.redisUrl, {
-      lazyConnect: true,
-      maxRetriesPerRequest: 2,
+      lazyConnect: false,
+      maxRetriesPerRequest: null,
     });
     this.client.on('error', (err) => this.logger.error({ err }, 'Redis error'));
   }
 
   async connect(): Promise<void> {
-    await this.client.connect();
+    if (this.client.status === 'wait') {
+      await this.client.connect();
+    }
     this.logger.info('Redis connected');
   }
 
@@ -38,6 +40,18 @@ export class RedisService {
       return (await this.client.ping()) === 'PONG';
     } catch {
       return false;
+    }
+  }
+
+  async readinessCheck(): Promise<{ healthy: boolean; latencyMs: number; memory?: string }> {
+    const start = Date.now();
+    try {
+      await this.client.ping();
+      const info = await this.client.info('memory');
+      const usedMemory = info.match(/used_memory_human:(\S+)/)?.[1];
+      return { healthy: true, latencyMs: Date.now() - start, memory: usedMemory };
+    } catch {
+      return { healthy: false, latencyMs: Date.now() - start };
     }
   }
 }

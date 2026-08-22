@@ -1,5 +1,6 @@
 pyproject.toml
 app/__init__.py
+app/instrumentation.py
 app/main.py
 app/agents/__init__.py
 app/agents/finance/__init__.py
@@ -59,7 +60,6 @@ app/embeddings/providers/voyage_provider.py
 app/evaluation/__init__.py
 app/evaluation/llm_metrics.py
 app/evaluation/rag_metrics.py
-app/graph/__init__.py
 app/graphs/__init__.py
 app/graphs/edges.py
 app/graphs/graph_builder.py

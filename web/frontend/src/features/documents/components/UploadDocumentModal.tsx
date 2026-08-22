@@ -62,7 +62,7 @@ export function UploadDocumentModal({ open, onClose }: UploadDocumentModalProps)
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
+    <Dialog open={open} onClose={handleClose} data-testid="upload-document-modal">
       <DialogContent>
         <DialogTitle>Upload Document</DialogTitle>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
@@ -73,6 +73,7 @@ export function UploadDocumentModal({ open, onClose }: UploadDocumentModalProps)
             ref={fileRef}
             type="file"
             accept=".pdf,.docx,.txt,.csv,.xlsx"
+            data-testid="upload-file-input"
             className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
           />
           <p className="text-xs text-slate-500">Accepted: PDF, DOCX, TXT, CSV, XLSX</p>
@@ -89,16 +90,16 @@ export function UploadDocumentModal({ open, onClose }: UploadDocumentModalProps)
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-red-600" data-testid="upload-error">
             {error}
           </p>
         )}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} data-testid="upload-cancel">
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} data-testid="upload-submit">
             {isLoading ? 'Uploading…' : 'Upload'}
           </Button>
         </DialogFooter>

@@ -1,0 +1,445 @@
+# OptiAgent SLO/SLI Definitions & Prometheus Alerting Rules
+#
+# Service Level Objectives for the Enterprise AI Operations Platform
+# These rules define what "reliable" means for our customers.
+
+groups:
+  # ========================================================================
+  # BACKEND API - Availability & Latency
+  # ========================================================================
+  - name: backend-slos
+    interval: 30s
+    rules:
+      # --- Availability: Request success rate over 5m window ---
+      - alert: BackendHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="backend",code=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="backend"}[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "Backend error rate > 1% (5m)"
+          description: |
+            Backend 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes.
+            This violates the 99.9% availability SLO.
+          runbook_url: "https://runbooks.optiagent.example.com/backend-high-error-rate"
+
+      # --- Latency: p99 < 500ms over 5m ---
+      - alert: BackendHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: latency
+        annotations:
+          summary: "Backend p99 latency > 500ms (5m)"
+          description: |
+            Backend API p99 latency is {{ $value | humanizeDuration }}.
+            Target: < 500ms p99.
+          runbook_url: "https://runbooks.optiagent.example.com/backend-high-latency"
+
+      # --- Saturation: CPU/Memory pressure ---
+      - alert: BackendHighCPU
+        expr: |
+          (rate(process_cpu_seconds_total{job="backend"}[5m]) / 1) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "Backend CPU usage > 80% (10m)"
+          description: "Backend process CPU usage sustained above 80% for 10 minutes."
+
+      - alert: BackendHighMemory
+        expr: |
+          (process_resident_memory_bytes{job="backend"} / 1024 / 1024) > 1024
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "Backend memory > 1GB (10m)"
+          description: "Backend RSS memory sustained above 1GB."
+
+  # ========================================================================
+  # AI SERVICE - Quality & Cost
+  # ========================================================================
+  - name: ai-service-slos
+    interval: 60s
+    rules:
+      # --- AI Response Quality: Hallucination rate ---
+      - alert: AIHighHallucinationRate
+        expr: |
+          sum(rate(ai_response_hallucination_total{job="ai-service"}[15m]))
+          /
+          sum(rate(ai_response_total{job="ai-service"}[15m])) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+          team: ai
+          slo: quality
+        annotations:
+          summary: "AI hallucination rate > 2% (15m)"
+          description: |
+            AI service hallucination rate is {{ $value | humanizePercentage }}.
+            Target: < 2% (validated against golden dataset).
+          runbook_url: "https://runbooks.optiagent.example.com/ai-hallucination-rate"
+
+      # --- AI Retrieval Precision ---
+      - alert: AILowRetrievalPrecision
+        expr: |
+          sum(rate(ai_retrieval_precision_numerator{job="ai-service"}[15m]))
+          /
+          sum(rate(ai_retrieval_precision_denominator{job="ai-service"}[15m])) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: ai
+          slo: quality
+        annotations:
+          summary: "AI retrieval precision < 80% (15m)"
+          description: |
+            RAG retrieval precision dropped below 80%.
+            Check embedding quality and reranker performance.
+
+      # --- AI Latency: p99 < 3s ---
+      - alert: AIHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(ai_request_duration_seconds_bucket{job="ai-service"}[5m])) by (le)
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+          slo: latency
+        annotations:
+          summary: "AI service p99 latency > 3s (5m)"
+          description: "AI request p99 latency is {{ $value | humanizeDuration }}. Target: < 3s."
+
+      # --- AI Cost: Token usage per 1k requests ---
+      - alert: AIHighCostPerRequest
+        expr: |
+          sum(rate(ai_tokens_total{job="ai-service",type="output"}[1h]))
+          /
+          sum(rate(ai_requests_total{job="ai-service"}[1h])) * 1000 > 5000
+        for: 30m
+        labels:
+          severity: warning
+          team: ai
+          slo: cost
+        annotations:
+          summary: "AI cost > 5000 tokens/1k requests (1h)"
+          description: |
+            Average output tokens per 1000 requests is {{ $value | humanize }}.
+            Consider model routing optimization or caching.
+
+      # --- AI Gateway Circuit Breaker ---
+      - alert: AIGatewayCircuitOpen
+        expr: |
+          ai_gateway_circuit_breaker_state{job="ai-gateway",state="open"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "AI Gateway circuit breaker OPEN"
+          description: |
+            AI Gateway circuit breaker for model {{ $labels.model }} is OPEN.
+            Falling back to cached responses / secondary models.
+
+  # ========================================================================
+  # DATABASE - PostgreSQL
+  # ========================================================================
+  - name: database-slos
+    interval: 30s
+    rules:
+      # --- DB Connections ---
+      - alert: DatabaseHighConnections
+        expr: |
+          pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "PostgreSQL connections > 80% (5m)"
+          description: "Database connection pool at {{ $value | humanizePercentage }} capacity."
+
+      # --- Replication Lag ---
+      - alert: DatabaseReplicationLag
+        expr: |
+          pg_replication_lag_seconds > 30
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "PostgreSQL replication lag > 30s"
+          description: "Replica lag is {{ $value | humanizeDuration }}. Read replicas may serve stale data."
+
+      # --- Slow Queries ---
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(pg_stat_statements_total_time_ms_sum{quantile="0.99"}[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo: latency
+        annotations:
+          summary: "PostgreSQL p99 query time > 1s"
+          description: "Investigate slow queries via pg_stat_statements."
+
+      # --- Disk Space ---
+      - alert: DatabaseDiskSpace
+        expr: |
+          (pg_database_size_bytes / pg_tablespace_size_bytes) > 0.85
+        for: 15m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "PostgreSQL disk usage > 85%"
+          description: "Database {{ $labels.datname }} at {{ $value | humanizePercentage }} capacity."
+
+  # ========================================================================
+  # REDIS - Cache & Session Store
+  # ========================================================================
+  - name: redis-slos
+    interval: 30s
+    rules:
+      - alert: RedisHighMemory
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "Redis memory > 85% (10m)"
+          description: "Redis memory usage at {{ $value | humanizePercentage }}. Consider eviction policy or scaling."
+
+      - alert: RedisHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(redis_command_duration_seconds_bucket[5m])) by (le)
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: latency
+        annotations:
+          summary: "Redis p99 latency > 100ms"
+          description: "Redis command p99 latency is {{ $value | humanizeDuration }}."
+
+  # ========================================================================
+  # KUBERNETES / INFRASTRUCTURE
+  # ========================================================================
+  - name: kubernetes-slos
+    interval: 30s
+    rules:
+      # --- Pod Restarts (CrashLoop) ---
+      - alert: KubernetesPodCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} crash looping"
+          description: "Container {{ $labels.container }} restarted {{ $value | humanize }}/min."
+
+      # --- Deployment Replica Mismatch ---
+      - alert: KubernetesDeploymentReplicasMismatch
+        expr: |
+          kube_deployment_status_replicas_available != kube_deployment_spec_replicas
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: availability
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} replica mismatch"
+          description: "Available: {{ $value | humanize }}, Desired: {{ kube_deployment_spec_replicas }}."
+
+      # --- Node Pressure ---
+      - alert: KubernetesNodeMemoryPressure
+        expr: |
+          kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "Node {{ $labels.node }} under memory pressure"
+          description: "Kubernetes node reporting MemoryPressure condition."
+
+      - alert: KubernetesNodeDiskPressure
+        expr: |
+          kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo: saturation
+        annotations:
+          summary: "Node {{ $labels.node }} under disk pressure"
+          description: "Kubernetes node reporting DiskPressure condition."
+
+  # ========================================================================
+  # BUSINESS SLOS (Product-level)
+  # ========================================================================
+  - name: business-slos
+    interval: 300s # 5m evaluation for business metrics
+    rules:
+      # --- Workflow Completion Rate ---
+      - alert: LowWorkflowCompletionRate
+        expr: |
+          sum(rate(workflow_completed_total[1h]))
+          /
+          sum(rate(workflow_started_total[1h])) < 0.95
+        for: 15m
+        labels:
+          severity: warning
+          team: product
+          slo: business
+        annotations:
+          summary: "Workflow completion rate < 95% (1h)"
+          description: |
+            Only {{ $value | humanizePercentage }} of started workflows completed successfully.
+            Check for stuck approvals or failed automation steps.
+
+      # --- AI Answer Acceptance Rate ---
+      - alert: LowAIAnswerAcceptance
+        expr: |
+          sum(rate(ai_answer_accepted_total[1h]))
+          /
+          sum(rate(ai_answer_generated_total[1h])) < 0.7
+        for: 30m
+        labels:
+          severity: warning
+          team: product
+          slo: business
+        annotations:
+          summary: "AI answer acceptance rate < 70% (1h)"
+          description: |
+            Users accepted only {{ $value | humanizePercentage }} of AI-generated answers.
+            Indicates quality or relevance issues.
+
+      # --- Document Search Success Rate ---
+      - alert: LowDocumentSearchSuccess
+        expr: |
+          sum(rate(document_search_clicked_total[1h]))
+          /
+          sum(rate(document_search_performed_total[1h])) < 0.4
+        for: 30m
+        labels:
+          severity: warning
+          team: product
+          slo: business
+        annotations:
+          summary: "Document search click-through < 40% (1h)"
+          description: "Users clicking results for only {{ $value | humanizePercentage }} of searches."
+
+  # ========================================================================
+  # ERROR BUDGET BURN RATE (Multi-window, multi-burn-rate)
+  # ========================================================================
+  - name: error-budget-burn
+    interval: 60s
+    rules:
+      # Fast burn: 2% error budget consumed in 1h (14.4x normal)
+      - alert: ErrorBudgetFastBurn
+        expr: |
+          (
+            sum(rate(http_requests_total{job="backend",code=~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total{job="backend"}[1h]))
+          ) > 0.0002
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "Fast error budget burn detected (1h window)"
+          description: |
+            Error rate {{ $value | humanizePercentage }} over 1h.
+            At this rate, monthly error budget exhausted in < 1 day.
+
+      # Slow burn: 5% error budget consumed in 6h (1.2x normal)
+      - alert: ErrorBudgetSlowBurn
+        expr: |
+          (
+            sum(rate(http_requests_total{job="backend",code=~"5.."}[6h]))
+            /
+            sum(rate(http_requests_total{job="backend"}[6h]))
+          ) > 0.00005
+        for: 30m
+        labels:
+          severity: warning
+          team: platform
+          slo: availability
+        annotations:
+          summary: "Slow error budget burn detected (6h window)"
+          description: |
+            Error rate {{ $value | humanizePercentage }} over 6h.
+            At this rate, monthly error budget exhausted in ~1 week.
+
+  # ========================================================================
+  # DEAD MAN'S SWITCH - Critical jobs must run
+  # ========================================================================
+  - name: dead-mans-switch
+    interval: 60s
+    rules:
+      - alert: BackupJobMissing
+        expr: |
+          time() - last_backup_timestamp_seconds > 86400
+        for: 0m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Database backup missing for > 24h"
+          description: "Last successful backup was {{ $value | humanizeDuration }} ago."
+
+      - alert: AIEvalJobMissing
+        expr: |
+          time() - last_ai_evaluation_timestamp_seconds > 172800
+        for: 0m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "AI evaluation job missing for > 48h"
+          description: "Automated AI quality evaluation has not run in 48 hours."
+
+      - alert: CertExpirySoon
+        expr: |
+          ssl_cert_expiry_timestamp_seconds - time() < 2592000 # 30 days
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SSL certificate expires in < 30 days"
+          description: "Certificate for {{ $labels.domain }} expires on {{ $value | humanizeDate }}."

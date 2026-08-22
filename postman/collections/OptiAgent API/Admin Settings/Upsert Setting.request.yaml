@@ -1,0 +1,23 @@
+$kind: http-request
+name: Upsert Setting
+method: PUT
+url: '{{backendUrl}}/api/v1/admin/settings/:key'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+pathVariables:
+  - key: key
+    value: '{{settingKey}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "value": "some-value",
+      "description": "Setting description"
+    }

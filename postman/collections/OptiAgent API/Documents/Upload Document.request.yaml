@@ -1,0 +1,16 @@
+$kind: http-request
+name: Upload Document
+method: POST
+url: '{{backendUrl}}/api/v1/documents/upload'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''

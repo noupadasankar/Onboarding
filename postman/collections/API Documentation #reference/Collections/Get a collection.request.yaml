@@ -1,0 +1,11 @@
+$kind: http-request
+description: Gets information about a collection. For a complete list of this endpoint's possible values, use the [collection.json schema file](https://schema.postman.com/json/collection/v2.1.0/collection.json).
+url: https://api.getpostman.com/collections/{{collectionId}}
+method: GET
+queryParams:
+  - key: access_key
+    value: "{{accessKey}}"
+    disabled: true
+    description: Optional. A collection's read-only access key. Using this query parameter does not require an API key to call the endpoint.
+examples: ./.resources/Get a collection.resources/examples
+order: 2000

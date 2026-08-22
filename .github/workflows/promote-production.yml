@@ -1,0 +1,140 @@
+name: Promote to Production (Manual Trigger)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-slot:
+        description: 'Slot to promote (the one that was validated)'
+        required: true
+        type: choice
+        options: [green, blue]
+      image-tag:
+        description: 'Image tag that was deployed'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  promote:
+    name: Promote ${{ github.event.inputs.target-slot }} to Production
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.PRODUCTION_KUBECONFIG }}
+
+      - name: Determine current active slot
+        id: current-slot
+        run: |
+          # Check which slot is currently active by inspecting service selector
+          CURRENT=$(kubectl get svc backend -n optiagent-prod -o jsonpath='{.spec.selector.deployment-slot}' 2>/dev/null || echo "blue")
+          echo "current-slot=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current active slot: $CURRENT"
+
+      - name: Validate target slot is deployed
+        run: |
+          TARGET="${{ github.event.inputs.target-slot }}"
+          
+          # Check if target slot deployment exists and has ready replicas
+          READY=$(kubectl get deployment backend-$TARGET -n optiagent-prod -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+          DESIRED=$(kubectl get deployment backend-$TARGET -n optiagent-prod -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+          
+          if [ "$READY" = "$DESIRED" ] && [ "$READY" -gt 0 ]; then
+            echo "✅ $TARGET slot has $READY/$DESIRED ready replicas"
+          else
+            echo "❌ $TARGET slot not ready: $READY/$DESIRED replicas"
+            exit 1
+          fi
+
+      - name: Switch traffic to ${{ github.event.inputs.target-slot }}
+        run: |
+          TARGET="${{ github.event.inputs.target-slot }}"
+          CURRENT="${{ steps.current-slot.outputs.current-slot }}"
+          
+          if [ "$TARGET" = "$CURRENT" ]; then
+            echo "⚠️ $TARGET is already active. No switch needed."
+            exit 0
+          fi
+          
+          echo "🔄 Switching traffic from $CURRENT to $TARGET..."
+          
+          # Update service selectors
+          kubectl patch service backend -n optiagent-prod \
+            -p '{"spec":{"selector":{"app":"backend","deployment-slot":"'$TARGET'"}}}'
+          
+          kubectl patch service frontend -n optiagent-prod \
+            -p '{"spec":{"selector":{"app":"frontend","deployment-slot":"'$TARGET'"}}}'
+          
+          echo "✅ Service selectors updated"
+
+      - name: Verify promotion
+        run: |
+          TARGET="${{ github.event.inputs.target-slot }}"
+          
+          echo "Verifying promotion..."
+          sleep 10
+          
+          # Check service endpoints
+          ENDPOINT_SLOT=$(kubectl get endpoints backend -n optiagent-prod -o jsonpath='{.subsets[0].addresses[0].targetRef.labels.deployment-slot}' 2>/dev/null || echo "unknown")
+          
+          if [ "$ENDPOINT_SLOT" = "$TARGET" ]; then
+            echo "✅ Traffic confirmed on $TARGET slot"
+          else
+            echo "❌ Traffic not on $TARGET slot (found: $ENDPOINT_SLOT)"
+            exit 1
+          fi
+          
+          # Health check through production URL
+          curl -sf https://optiagent.example.com/health/ready | jq -e '.status == "ready"' || exit 1
+          
+          echo "✅ Promotion verified"
+
+      - name: Scale down previous slot
+        run: |
+          CURRENT="${{ steps.current-slot.outputs.current-slot }}"
+          
+          if [ "$CURRENT" != "${{ github.event.inputs.target-slot }}" ]; then
+            echo "Scaling down previous slot: $CURRENT"
+            kubectl scale deployment backend-$CURRENT --replicas=0 -n optiagent-prod
+            kubectl scale deployment frontend-$CURRENT --replicas=0 -n optiagent-prod
+          else
+            echo "No previous slot to scale down"
+          fi
+
+      - name: Create release tag
+        run: |
+          TAG="v$(date +%Y%m%d-%H%M%S)-${{ github.event.inputs.image-tag }}"
+          gh release create "$TAG" \
+            --title "Production Release $TAG" \
+            --notes "Promoted slot: ${{ github.event.inputs.target-slot }}\nImage: ${{ github.event.inputs.image-tag }}" \
+            --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promotion notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Production promoted to ${{ github.event.inputs.target-slot }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Traffic Switched*\nFrom: `${{ steps.current-slot.outputs.current-slot }}`\nTo: `${{ github.event.inputs.target-slot }}`\nImage: `${{ github.event.inputs.image-tag }}`\nRun: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

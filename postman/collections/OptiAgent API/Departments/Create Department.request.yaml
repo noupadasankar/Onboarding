@@ -1,0 +1,21 @@
+$kind: http-request
+name: Create Department
+method: POST
+url: '{{backendUrl}}/api/v1/departments'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "engineering",
+      "displayName": "Engineering",
+      "description": "Engineering department"
+    }

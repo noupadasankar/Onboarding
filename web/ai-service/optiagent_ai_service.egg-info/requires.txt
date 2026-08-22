@@ -4,6 +4,15 @@ pydantic<3,>=2.8
 pydantic-settings<3,>=2.4
 python-dotenv<2,>=1.0
 structlog<26,>=24.4
+opentelemetry-api<2,>=1.25
+opentelemetry-sdk<2,>=1.25
+opentelemetry-exporter-otlp<2,>=1.25
+opentelemetry-instrumentation-fastapi<1,>=0.46
+opentelemetry-instrumentation-httpx<1,>=0.46
+opentelemetry-instrumentation-sqlalchemy<1,>=0.46
+opentelemetry-instrumentation-redis<1,>=0.46
+opentelemetry-instrumentation-logging<1,>=0.46
+prometheus-client<1,>=0.19
 python-multipart<0.1,>=0.0.12
 pypdf<5,>=4.3
 python-docx<2,>=1.1
@@ -11,7 +20,8 @@ openpyxl<4,>=3.1
 chardet<6,>=5.2
 tiktoken<1,>=0.7
 openai<2,>=1.40
-chromadb<1,>=0.5
+chromadb==0.6.3
+langgraph<1,>=0.2
 rank-bm25>=0.2.2
 
 [dev]

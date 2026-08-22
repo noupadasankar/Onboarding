@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Notifications
+method: GET
+url: '{{backendUrl}}/api/v1/notifications'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

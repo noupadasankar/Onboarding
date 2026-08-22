@@ -1,0 +1,46 @@
+$kind: http-request
+description: |-
+  Creates a collection using the [Postman Collection v2 schema format](https://schema.postman.com/json/collection/v2.1.0/docs/index.html). Include a `collection` object in the request body that contains the following required properties:
+
+  *   `info` — An **object** that contains the following properties:
+      *   `name` — A **string** value that contains the collection's name.
+      *   `schema` — A **string** that contains a URL to the collection's schema. For example, the `https://schema.getpostman.com/collection/v1` URL.
+  *   `item` — An **object** that contains the HTTP request and response information.
+      *   `request` — An **object** that contains the collection's request information. For a complete list of values, refer to the `definitions.request` entry in the [collection.json schema file](https://schema.postman.com/json/collection/v2.1.0/collection.json). If you pass an empty object for this value, the system defaults to an untitled GET request.
+
+  **Note:**
+
+  *   For a complete list of available property values for this endpoint, use the following references available in the [collection.json schema file](https://schema.postman.com/json/collection/v2.1.0/collection.json):
+      *   `info` object — Use the `definitions.info` entry.
+      *   `item` object — Use the `definitions.items` entry.
+  *   For all other possible values, refer to the [collection.json schema file](https://schema.postman.com/json/collection/v2.1.0/collection.json).
+url: https://api.getpostman.com/collections
+method: POST
+headers:
+  Content-Type: application/json
+queryParams:
+  - key: workspace
+    value: "{{workspaceId}}"
+    disabled: true
+    description: |-
+      Optional. A workspace ID in which to create the collection.
+
+      If you do not include this query parameter, the system creates the collection in your "My Workspace" workspace.
+body:
+  type: text
+  content: |-
+    {
+        "collection": {
+            "info": {
+                "name": "{{collectionName}}",
+                "schema": "{{collectionSchemaUrl}}"
+            },
+            "item": [
+                {
+                    "request": {}
+                }
+            ]
+        }
+    }
+examples: ./.resources/Create a collection.resources/examples
+order: 1000

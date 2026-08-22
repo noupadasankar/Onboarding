@@ -30,7 +30,9 @@ export interface IIndexingQueue {
   /** Register the worker that processes each job. Call once at startup. */
   process(handler: IndexingJobHandler): void;
   /** Add a job to the queue. Returns immediately; processing is async. */
-  enqueue(job: IndexingJob): void;
+  enqueue(job: IndexingJob): Promise<void>;
   /** Number of jobs currently running + waiting (for health/metrics). */
-  size(): number;
+  size(): Promise<number>;
+  /** Graceful shutdown — wait for active jobs, close connections. */
+  shutdown(): Promise<void>;
 }

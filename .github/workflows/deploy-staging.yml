@@ -1,0 +1,165 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        type: string
+      skip-smoke-tests:
+        description: 'Skip post-deployment smoke tests'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.STAGING_KUBECONFIG }}
+
+      - name: Verify cluster access
+        run: |
+          kubectl version --client
+          kubectl get nodes -o wide
+
+      - name: Deploy backend
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image-tag }}"
+          echo "Deploying backend:${IMAGE_TAG} to staging..."
+          
+          # Update deployment image
+          kubectl set image deployment/backend \
+            backend=ghcr.io/${{ github.repository }}/backend:${IMAGE_TAG} \
+            -n optiagent-staging
+          
+          # Wait for rollout
+          kubectl rollout status deployment/backend -n optiagent-staging --timeout=300s
+
+      - name: Deploy frontend
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image-tag }}"
+          echo "Deploying frontend:${IMAGE_TAG} to staging..."
+          
+          kubectl set image deployment/frontend \
+            frontend=ghcr.io/${{ github.repository }}/frontend:${IMAGE_TAG} \
+            -n optiagent-staging
+          
+          kubectl rollout status deployment/frontend -n optiagent-staging --timeout=180s
+
+      - name: Run database migrations
+        run: |
+          echo "Running production migrations..."
+          kubectl run migrate-$(date +%s) \
+            --image=ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.image-tag }} \
+            --restart=Never \
+            --rm -i \
+            --namespace=optiagent-staging \
+            --env=DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" \
+            --env=REDIS_URL="${{ secrets.STAGING_REDIS_URL }}" \
+            --env=NODE_ENV=production \
+            --env=JWT_PRIVATE_KEY_PATH=/app/backend/secrets/jwt-private.pem \
+            --env=JWT_PUBLIC_KEY_PATH=/app/backend/secrets/jwt-public.pem \
+            -- node scripts/migrate-production.mjs
+        env:
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
+
+      - name: Wait for deployments to stabilize
+        run: |
+          sleep 30
+          echo "Waiting for pods to be ready..."
+          kubectl wait --for=condition=ready pod -l app=backend -n optiagent-staging --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=frontend -n optiagent-staging --timeout=120s
+
+      - name: Run smoke tests
+        if: ${{ !inputs.skip-smoke-tests }}
+        run: |
+          STAGING_URL="https://staging.optiagent.example.com"
+          echo "Running smoke tests against ${STAGING_URL}..."
+          
+          # 1. Health checks
+          echo "→ Testing /health/live..."
+          curl -sf "${STAGING_URL}/health/live" | jq -e '.status == "alive"'
+          
+          echo "→ Testing /health/ready..."
+          curl -sf "${STAGING_URL}/health/ready" | jq -e '.status == "ready"'
+          
+          # 2. API version check
+          echo "→ Testing API version..."
+          curl -sf "${STAGING_URL}/api/version" | jq -e '.version'
+          
+          # 3. Auth endpoints accessible
+          echo "→ Testing auth endpoint..."
+          curl -sf -X POST "${STAGING_URL}/api/auth/refresh" \
+            -H "Content-Type: application/json" \
+            -d '{"refreshToken":"invalid"}' | jq -e '.error.code == "UNAUTHORIZED"'
+          
+          # 4. Frontend loads
+          echo "→ Testing frontend..."
+          curl -sf "${STAGING_URL}/" | grep -q "OptiAgent" || exit 1
+          
+          echo "✅ All smoke tests passed!"
+
+      - name: Run integration tests (staging)
+        if: ${{ !inputs.skip-smoke-tests }}
+        run: |
+          echo "Running integration tests against staging..."
+          STAGING_API_URL="https://staging.optiagent.example.com/api"
+          
+          # Run a subset of integration tests
+          docker run --rm \
+            -e BASE_URL="${STAGING_API_URL}" \
+            -e STAGING=true \
+            ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.image-tag }} \
+            npm run test:integration:staging
+
+      - name: Verify metrics endpoints
+        run: |
+          echo "Verifying Prometheus metrics..."
+          curl -sf "https://staging.optiagent.example.com/metrics" | grep -q "http_requests_total" || exit 1
+          echo "✅ Metrics endpoint serving data"
+
+      - name: Post-deployment notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Staging deployment ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment ${{ job.status }}*\nImage: `${{ github.event.inputs.image-tag }}`\nCommit: `${{ github.sha }}`\nTriggered by: `${{ github.actor }}`\nRun: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed. Initiating rollback..."
+          kubectl rollout undo deployment/backend -n optiagent-staging
+          kubectl rollout undo deployment/frontend -n optiagent-staging
+          kubectl rollout status deployment/backend -n optiagent-staging --timeout=120s
+          kubectl rollout status deployment/frontend -n optiagent-staging --timeout=120s
+          echo "✅ Rollback completed"

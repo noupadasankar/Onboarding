@@ -77,14 +77,14 @@ export function DocumentListPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6" data-testid="documents-page">
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Documents</h1>
           <p className="text-sm text-slate-500">Manage uploaded documents and their indexing status.</p>
         </div>
         {hasPermission(Permission.DOCUMENTS_UPLOAD) && (
-          <Button onClick={() => setUploadOpen(true)}>Upload document</Button>
+          <Button onClick={() => setUploadOpen(true)} data-testid="upload-document-button">Upload document</Button>
         )}
       </div>
 
@@ -117,7 +117,7 @@ export function DocumentListPage() {
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100" data-testid="document-list">
               {data.items.map((doc) => (
                 <tr key={doc.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">{doc.originalName}</td>

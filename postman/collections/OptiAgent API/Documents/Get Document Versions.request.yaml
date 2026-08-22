@@ -1,0 +1,13 @@
+$kind: http-request
+name: Get Document Versions
+method: GET
+url: '{{backendUrl}}/api/v1/documents/:id/versions'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+pathVariables:
+  - key: id
+    value: '{{documentId}}'

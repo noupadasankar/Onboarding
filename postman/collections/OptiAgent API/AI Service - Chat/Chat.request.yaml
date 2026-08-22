@@ -1,0 +1,21 @@
+$kind: http-request
+name: Chat
+method: POST
+url: '{{aiServiceUrl}}/api/v1/chat'
+order: 1000
+headers:
+  - key: X-Internal-Token
+    value: '{{internalToken}}'
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "question": "What is the leave policy?",
+      "conversation_id": "{{conversationId}}",
+      "department_hint": "hr",
+      "top_k": 5,
+      "min_score": 0.5,
+      "stream": false
+    }

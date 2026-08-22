@@ -1,0 +1,8 @@
+$kind: http-request
+name: List Documents
+method: GET
+url: '{{aiServiceUrl}}/api/v1/documents'
+order: 2000
+headers:
+  - key: X-Internal-Token
+    value: '{{internalToken}}'

@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Documents
+method: GET
+url: '{{backendUrl}}/api/v1/documents'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

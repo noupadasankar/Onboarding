@@ -1,0 +1,24 @@
+$kind: http-request
+name: Update User
+method: PATCH
+url: '{{backendUrl}}/api/v1/users/:id'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+pathVariables:
+  - key: id
+    value: '{{userId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "role": "MANAGER",
+      "department": "finance",
+      "isActive": true
+    }

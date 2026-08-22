@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { Permission } from '@optiagent/shared';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { FeatureErrorBoundary } from '@/shared/components/FeatureErrorBoundary';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,6 +13,8 @@ interface ProtectedRouteProps {
 /**
  * Guards a route: unauthenticated users are redirected to /login (remembering
  * where they were headed); authenticated-but-unauthorized users get /forbidden.
+ * Wraps children in a FeatureErrorBoundary to prevent feature crashes from
+ * taking down the entire app.
  */
 export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
   const { isAuthenticated, hasPermission } = useAuth();
@@ -23,5 +26,9 @@ export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
   if (permission && !hasPermission(permission)) {
     return <Navigate to="/forbidden" replace />;
   }
-  return <>{children}</>;
+  return (
+    <FeatureErrorBoundary featureName="Protected feature">
+      {children}
+    </FeatureErrorBoundary>
+  );
 }

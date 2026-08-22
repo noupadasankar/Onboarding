@@ -1,0 +1,5 @@
+$kind: http-request
+name: Readiness
+method: GET
+url: '{{aiServiceUrl}}/api/v1/ready'
+order: 3000

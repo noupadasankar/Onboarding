@@ -1,0 +1,23 @@
+$kind: http-request
+name: Update Department
+method: PATCH
+url: '{{backendUrl}}/api/v1/departments/:id'
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+pathVariables:
+  - key: id
+    value: '{{departmentId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "displayName": "Engineering Team",
+      "isActive": true
+    }

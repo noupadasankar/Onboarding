@@ -1,0 +1,3 @@
+$kind: collection
+description: The `/me` endpoints let you manage information about the authenticated user.
+order: 1000

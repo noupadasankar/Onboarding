@@ -1,0 +1,13 @@
+$kind: http-request
+name: Delete Setting
+method: DELETE
+url: '{{backendUrl}}/api/v1/admin/settings/:key'
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+pathVariables:
+  - key: key
+    value: '{{settingKey}}'

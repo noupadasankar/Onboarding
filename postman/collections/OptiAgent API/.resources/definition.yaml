@@ -1,0 +1,27 @@
+$kind: collection
+name: OptiAgent API
+variables:
+  - key: backendUrl
+    value: 'http://localhost:8000'
+  - key: aiServiceUrl
+    value: 'http://localhost:8100'
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''
+  - key: internalToken
+    value: ''
+  - key: userId
+    value: ''
+  - key: documentId
+    value: ''
+  - key: aiDocumentId
+    value: ''
+  - key: conversationId
+    value: ''
+  - key: departmentId
+    value: ''
+  - key: notificationId
+    value: ''
+  - key: settingKey
+    value: ''

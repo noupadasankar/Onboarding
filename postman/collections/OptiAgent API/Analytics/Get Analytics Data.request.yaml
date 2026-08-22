@@ -1,0 +1,10 @@
+$kind: http-request
+name: Get Analytics Data
+method: GET
+url: '{{backendUrl}}/api/v1/analytics'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
